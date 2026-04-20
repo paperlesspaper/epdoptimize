@@ -620,6 +620,13 @@ function getPhotoScore(metrics: ImageStyleMetrics): number {
   const saturationSpreadScore = normalize(metrics.saturationStdDev, 0.08, 0.26);
   const entropyScore = normalize(metrics.paletteEntropy, 0.55, 0.9);
   const photoTileScore = normalize(metrics.photoTileRatio, 0.18, 0.62);
+  const desaturatedPhotoScore = Math.min(
+    normalize(metrics.grayRatio, 0.45, 0.75),
+    normalize(metrics.photoTileRatio, 0.34, 0.58),
+    normalize(metrics.lumaStdDev, 48, 76),
+    normalize(1 - metrics.flatRatio, 0.34, 0.58),
+    normalize(metrics.paletteEntropy, 0.62, 0.88)
+  );
   const flatIllustrationPenalty = normalize(metrics.flatRatio, 0.55, 0.88);
   const topColorPenalty = normalize(metrics.topColorCoverage, 0.45, 0.86);
   const hardEdgePenalty =
@@ -634,7 +641,8 @@ function getPhotoScore(metrics: ImageStyleMetrics): number {
       lumaScore * 0.1 +
       saturationSpreadScore * 0.06 +
       entropyScore * 0.07 +
-      photoTileScore * 0.13 -
+      photoTileScore * 0.13 +
+      desaturatedPhotoScore * 0.24 -
       flatIllustrationPenalty * 0.12 -
       topColorPenalty * 0.1 -
       hardEdgePenalty * 0.08
@@ -646,6 +654,7 @@ function getImageKindScores(
   photoScore: number
 ): Record<ImageKind, number> {
   const contrastEndpointRatio = metrics.darkRatio + metrics.lightRatio;
+  const photoTileLineArtPenalty = normalize(metrics.photoTileRatio, 0.32, 0.58);
 
   return {
     photo: clamp01(
@@ -678,7 +687,8 @@ function getImageKindScores(
         normalize(metrics.edgeDensity, 0.05, 0.22) * 0.24 +
         normalize(metrics.flatRatio, 0.5, 0.86) * 0.18 +
         normalize(metrics.topColorCoverage, 0.45, 0.9) * 0.18 +
-        normalize(0.16 - metrics.highSaturationRatio, 0, 0.16) * 0.12
+        normalize(0.16 - metrics.highSaturationRatio, 0, 0.16) * 0.12 -
+        photoTileLineArtPenalty * 0.14
     ),
     textOrUi: clamp01(
       normalize(metrics.textTileRatio, 0.05, 0.35) * 0.32 +

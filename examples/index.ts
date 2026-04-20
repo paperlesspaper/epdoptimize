@@ -905,7 +905,9 @@ function updateImageStyleResult(result: ImageStyleClassification) {
   imageStyleConfidence.textContent =
     result.style === "unknown"
       ? "-"
-      : `${Math.round(result.confidence * 100)}% confidence`;
+      : `${formatImageStyle(result.style)} · ${Math.round(
+          result.confidence * 100,
+        )}% confidence`;
   imageStyleMeter.style.width =
     result.style === "unknown"
       ? "0%"
