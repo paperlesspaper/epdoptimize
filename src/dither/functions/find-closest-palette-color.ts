@@ -1,12 +1,38 @@
-const findClosestPaletteColor = (pixel, colorPalette) => {
+import {
+  deltaE,
+  rgbToLab,
+  type ColorMatchingMode,
+  type RGB,
+  type RGBA,
+} from "../processing";
+
+const withAlpha = (color: RGB | RGBA): RGBA => [
+  color[0],
+  color[1],
+  color[2],
+  (color as RGBA)[3] ?? 255,
+];
+
+const findClosestPaletteColor = (
+  pixel: RGB | RGBA,
+  colorPalette: RGB[],
+  colorMatching: ColorMatchingMode = "rgb"
+): RGBA => {
+  if (!colorPalette.length) return withAlpha(pixel);
+  const pixelLab =
+    colorMatching === "lab" ? rgbToLab(pixel[0], pixel[1], pixel[2]) : null;
+
   const colors = colorPalette.map((color) => {
     return {
-      distance: distanceInColorSpace(color, pixel),
+      distance:
+        colorMatching === "lab" && pixelLab
+          ? deltaE(rgbToLab(...color), pixelLab)
+          : distanceInColorSpace(color, pixel),
       color,
     };
   });
 
-  let closestColor;
+  let closestColor: { distance: number; color: RGB };
   colors.forEach((color) => {
     if (!closestColor) {
       closestColor = color;
@@ -17,14 +43,10 @@ const findClosestPaletteColor = (pixel, colorPalette) => {
     }
   });
 
-  if (!closestColor.color[3]) {
-    closestColor.color.push(255); // if no alpha value is present add it.
-  }
-
-  return closestColor.color;
+  return withAlpha(closestColor.color);
 };
 
-const distanceInColorSpace = (color1, color2) => {
+const distanceInColorSpace = (color1: RGB, color2: RGB | RGBA) => {
   // Currenlty ignores alpha
 
   // Luminosity needs to be accounted for, for better results.
