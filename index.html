@@ -3,124 +3,1091 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EPDOptimize Example</title>
+    <title>EPDOptimize Demo</title>
     <style>
+      :root {
+        color-scheme: light;
+        --ink: #1d2329;
+        --muted: #64707d;
+        --line: #d8dee5;
+        --panel: #f6f8fa;
+        --paper: #ffffff;
+        --accent: #176f6b;
+        --accent-strong: #0d5b57;
+        --focus: #f4c542;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: sans-serif;
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem clamp(1rem, 3vw, 2rem);
+        border-bottom: 1px solid var(--line);
+        min-height: 4rem;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      h3 {
+        font-size: 0.82rem;
+        color: var(--muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      a {
+        color: var(--accent-strong);
+      }
+
+      .top-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(18rem, 26rem) minmax(0, 1fr);
+        height: calc(100vh - 4rem);
+        min-height: 0;
+      }
+
+      aside {
+        border-right: 1px solid var(--line);
+        background: var(--panel);
+        padding: 1rem;
+        min-height: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+      }
+
+      .workspace {
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
         padding: 1rem;
       }
-      canvas {
-        margin-top: 1rem;
-        border: 1px solid #ccc;
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
       }
-      #downloadLink {
+
+      fieldset {
+        display: grid;
+        gap: 0.75rem;
+        margin: 0;
+        padding: 0 0 1rem;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      fieldset:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      legend {
+        padding: 0 0 0.75rem;
+      }
+
+      .control-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
+      }
+
+      .control {
+        display: grid;
+        gap: 0.35rem;
+        min-width: 0;
+      }
+
+      .control.full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 650;
+      }
+
+      select,
+      input[type="password"],
+      input[type="text"],
+      input[type="number"],
+      input[type="file"]::file-selector-button {
+        width: 100%;
+        min-height: 2.35rem;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--paper);
+        color: var(--ink);
+        font: inherit;
+      }
+
+      select,
+      input[type="password"],
+      input[type="text"],
+      input[type="number"] {
+        padding: 0.45rem 0.55rem;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+
+      input:focus-visible,
+      select:focus-visible,
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .range-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 3.25rem;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      output {
+        min-width: 3.25rem;
+        text-align: right;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+        font-size: 0.85rem;
+      }
+
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 2.35rem;
+        color: var(--ink);
+      }
+
+      .file-row {
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .image-style {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.35rem 0.75rem;
+        padding-top: 0.25rem;
+      }
+
+      .image-style-label,
+      .image-style-confidence {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.35;
+      }
+
+      .image-style-value {
+        font-size: 0.95rem;
+        font-weight: 750;
+        line-height: 1.25;
+      }
+
+      .image-style-meter {
+        grid-column: 1 / -1;
+        height: 0.35rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--line);
+      }
+
+      .image-style-meter span {
         display: block;
-        margin-top: 1rem;
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent);
+        transition: width 160ms ease;
+      }
+
+      .image-style-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.35rem 0.55rem;
+        margin: 0;
+        padding-top: 0.25rem;
+      }
+
+      .image-style-metrics div {
+        display: grid;
+        gap: 0.1rem;
+        min-width: 0;
+      }
+
+      .image-style-metrics dt {
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.2;
+      }
+
+      .image-style-metrics dd {
+        margin: 0;
+        color: var(--ink);
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+      }
+
+      .auto-recommendation {
+        display: grid;
+        gap: 0.35rem;
+        grid-column: 1 / -1;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.35;
+      }
+
+      .auto-recommendation strong {
+        color: var(--ink);
+      }
+
+      .auto-recommendation ul {
+        display: grid;
+        gap: 0.25rem;
+        margin: 0;
+        padding-left: 1rem;
+      }
+
+      .sample-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+        gap: 0.45rem;
+      }
+
+      .sample-thumb {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        padding: 0;
+        overflow: hidden;
+        border: 2px solid transparent;
+        border-radius: 6px;
+        background: var(--paper);
+        cursor: pointer;
+      }
+
+      .sample-thumb img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .sample-thumb.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+      }
+
+      .sample-thumb:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .palette-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(1.45rem, 1fr));
+        gap: 0.25rem;
+        min-height: 1.75rem;
+      }
+
+      .color-swatch {
+        display: block;
+        min-height: 1.75rem;
+        border: 1px solid rgba(29, 35, 41, 0.22);
+        border-radius: 4px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+      }
+
+      input[type="file"] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      input[type="file"]::file-selector-button {
+        width: auto;
+        margin-right: 0.75rem;
+        padding: 0 0.75rem;
+        border-color: transparent;
+        background: var(--accent);
+        color: white;
+        cursor: pointer;
+      }
+
+      .canvas-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        align-items: start;
+      }
+
+      .workspace-tools {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+      }
+
+      .preview {
+        display: grid;
+        gap: 0.75rem;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        padding: 0.75rem;
+      }
+
+      .preview-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .preview-title {
+        display: grid;
+        gap: 0.2rem;
+        min-width: 0;
+      }
+
+      .preview-subtitle {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.35;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        max-height: 72vh;
+        object-fit: contain;
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(45deg, #eff2f5 25%, transparent 25%),
+          linear-gradient(-45deg, #eff2f5 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #eff2f5 75%),
+          linear-gradient(-45deg, transparent 75%, #eff2f5 75%);
+        background-position:
+          0 0,
+          0 8px,
+          8px -8px,
+          -8px 0;
+        background-size: 16px 16px;
+      }
+
+      .canvas-grid.original-size canvas {
+        width: auto;
+        max-width: none;
+        max-height: none;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        min-height: 2.1rem;
+        padding: 0.35rem 0.7rem;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: var(--accent);
+        color: white;
+        font: inherit;
+        font-size: 0.86rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .button svg {
+        width: 1rem;
+        height: 1rem;
+        flex: 0 0 auto;
+      }
+
+      .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      .action-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .status-line {
+        min-height: 1.1rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.35;
+      }
+
+      .status-line[data-state="success"] {
+        color: var(--accent-strong);
+      }
+
+      .status-line[data-state="error"] {
+        color: #a02828;
+      }
+
+      .icon-button {
+        display: inline-grid;
+        place-items: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--paper);
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .icon-button svg {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .config-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .config-block {
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .config-output {
+        max-height: 20rem;
+        margin: 0;
+        overflow: auto;
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #11181f;
+        color: #e8edf2;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        white-space: pre;
+      }
+
+      .config-output.js {
+        max-height: 26rem;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 980px) {
+        body {
+          height: auto;
+          min-height: 100vh;
+          overflow: auto;
+        }
+
+        main {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+
+        aside {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          max-height: none;
+        }
+
+        .canvas-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 620px) {
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .control-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
-    <script type="module" crossorigin src="/epdoptimize/assets/index-D8A3kETo.js"></script>
+    <script type="module" crossorigin src="/epdoptimize/assets/index-CTwJKWr8.js"></script>
   </head>
   <body>
-    <h1>EPDOptimize Interactive Example</h1>
-    <p>
-      <a href="https://github.com/Utzel-Butzel/epdoptimize"
-        >GitHub repository</a
-      >
-      |
-      <a href="http://paperlesspaper.de/en">eInk picture frames</a>
-    </p>
-    <input type="file" id="fileInput" accept="image/*" />
+    <header>
+      <h1>EPDOptimize</h1>
+      <nav class="top-links" aria-label="Project links">
+        <a href="https://github.com/Utzel-Butzel/epdoptimize">GitHub</a>
+        <a href="http://paperlesspaper.de/en">paperlesspaper</a>
+      </nav>
+    </header>
 
-    <br />
-    <label for="paletteSelect">Palette:</label>
-    <select id="paletteSelect">
-      <option value="default">Default</option>
-      <option value="spectra6" selected>Spectra 6</option>
-      <option value="acep">Gallery</option>
-    </select>
-    <label for="deviceColorsSelect">Device colors:</label>
-    <select id="deviceColorsSelect">
-      <option value="default">Default</option>
-      <option value="spectra6" selected>Spectra 6</option>
-      <option value="acep">AcEP</option>
-    </select>
+    <main>
+      <aside>
+        <div class="toolbar">
+          <fieldset>
+            <legend><h3>Image</h3></legend>
+            <div class="file-row">
+              <label id="sampleImageLabel">Sample</label>
+              <div
+                id="sampleImageGrid"
+                class="sample-grid"
+                role="group"
+                aria-labelledby="sampleImageLabel"
+              ></div>
+              <label for="fileInput">Source</label>
+              <input type="file" id="fileInput" accept="image/*" />
+              <div
+                class="image-style"
+                aria-label="Detected image kind"
+                role="status"
+              >
+                <span class="image-style-label">Detected kind</span>
+                <span id="imageStyleConfidence" class="image-style-confidence">
+                  -
+                </span>
+                <strong id="imageStyleValue" class="image-style-value">
+                  Analyzing
+                </strong>
+                <div class="image-style-meter" aria-hidden="true">
+                  <span id="imageStyleMeter"></span>
+                </div>
+              </div>
+              <dl id="imageStyleMetrics" class="image-style-metrics"></dl>
+            </div>
+          </fieldset>
 
-    <br />
+          <fieldset>
+            <legend><h3>Display</h3></legend>
+            <div class="control-grid">
+              <div class="control full">
+                <label for="paletteSelect">Palette</label>
+                <select id="paletteSelect">
+                  <option value="default">Default</option>
+                  <option value="spectra6" selected>Spectra 6</option>
+                  <option value="spectra6legacy">Spectra 6 Legacy</option>
+                  <option value="aitjcize-spectra6">aitjcize Spectra 6</option>
+                  <option value="acep">Gallery</option>
+                  <option value="gameboy">Game Boy</option>
+                </select>
+                <div
+                  id="palettePreview"
+                  class="palette-strip"
+                  aria-label="Selected palette colors"
+                ></div>
+                <div
+                  id="deviceColorsPreview"
+                  class="palette-strip"
+                  aria-label="Selected device colors"
+                ></div>
+              </div>
+            </div>
+          </fieldset>
 
-    <label for="ditheringType">Dithering type:</label>
-    <select id="ditheringType">
-      <option value="errorDiffusion">Error Diffusion</option>
-      <option value="ordered">Ordered</option>
-      <option value="random">Random</option>
-      <option value="quantizationOnly">Quantization Only</option>
-    </select>
-    <label for="errorDiffusionMatrix">Error diffusion matrix:</label>
-    <select id="errorDiffusionMatrix">
-      <option value="floydSteinberg">Floyd-Steinberg</option>
-      <option value="atkinson">Atkinson</option>
-      <option value="falseFloydSteinberg">False Floyd-Steinberg</option>
-      <option value="jarvis">Jarvis</option>
-      <option value="stucki">Stucki</option>
-      <option value="burkes">Burkes</option>
-      <option value="sierra3">Sierra-3</option>
-      <option value="sierra2">Sierra-2</option>
-      <option value="sierra2-4a">Sierra-2-4A</option>
-    </select>
-    <!-- <label><input type="checkbox" id="serpentine" /> Serpentine</label> -->
-    <!-- <label for="orderedDitheringType">Ordered dithering type:</label> -->
-    <select id="orderedDitheringType">
-      <option value="bayer">Bayer</option>
-    </select>
-    <br />
-    <label for="orderedDitheringMatrixW">Ordered matrix width:</label>
-    <input
-      type="number"
-      id="orderedDitheringMatrixW"
-      value="4"
-      min="1"
-      max="8"
-      style="width: 3em"
-    />
-    <label for="orderedDitheringMatrixH">height:</label>
-    <input
-      type="number"
-      id="orderedDitheringMatrixH"
-      value="4"
-      min="1"
-      max="8"
-      style="width: 3em"
-    />
-    <label for="randomDitheringType">Random dithering type:</label>
-    <select id="randomDitheringType">
-      <option value="blackAndWhite">Black and White</option>
-      <option value="rgb">RGB</option>
-    </select>
-    <!--<label
-      ><input type="checkbox" id="sampleColorsFromImage" /> Sample colors from
-      image</label
-    >
-    <label for="numberOfSampleColors">Number of sample colors:</label>
-    <input
-      type="number"
-      id="numberOfSampleColors"
-      value="10"
-      min="1"
-      max="256"
-      style="width: 4em"
-    /> -->
+          <fieldset>
+            <legend><h3>Device Test</h3></legend>
+            <div class="control-grid">
+              <div class="control">
+                <label for="screenResolutionSelect">Screen</label>
+                <select id="screenResolutionSelect">
+                  <option value="openpaper7">
+                    7.3 Inch OpenPaper 7 - 800 x 480
+                  </option>
+                  <option value="openpaperL">
+                    13.3 Inch OpenPaper L - 1600 x 1200
+                  </option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="orientationSelect">Orientation</label>
+                <select id="orientationSelect">
+                  <option value="landscape">Landscape</option>
+                  <option value="portrait">Portrait</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="imageFitSelect">Image fit</label>
+                <select id="imageFitSelect">
+                  <option value="contain">Contain</option>
+                  <option value="cover">Cover</option>
+                </select>
+              </div>
+              <div class="control full">
+                <label for="paperIdInput">Paper ID</label>
+                <input
+                  type="text"
+                  id="paperIdInput"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+              <div class="control full">
+                <label for="apiKeyInput">x-api-key</label>
+                <input
+                  type="password"
+                  id="apiKeyInput"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+              <div class="control full action-row">
+                <button id="testOnDeviceButton" class="button" type="button">
+                  Test on device
+                </button>
+                <p
+                  id="deviceTestStatus"
+                  class="status-line"
+                  role="status"
+                  aria-live="polite"
+                ></p>
+              </div>
+            </div>
+          </fieldset>
 
-    <h3>Input</h3>
-    <canvas id="inputCanvas" style="width: 100px"></canvas>
-    <h3>Output</h3>
-    <canvas id="outputCanvas"></canvas><br />
-    <a id="downloadLink" href="#" download="dithered.png">Download Result</a>
-    <h3>Device colors</h3>
-    <canvas id="deviceColorsCanvas"></canvas><br />
-    <a
-      id="downloadDeviceColorsLink"
-      href="#"
-      download="ditheredWithDeviceColors.png"
-      >Download Result</a
-    >
+          <fieldset>
+            <legend><h3>Processing</h3></legend>
+            <div class="control-grid">
+              <div class="control full">
+                <label for="processingPreset">Preset</label>
+                <select id="processingPreset"></select>
+              </div>
+              <div class="auto-recommendation">
+                <strong id="autoRecommendationTitle">Auto recommendation</strong>
+                <span id="autoRecommendationSummary">Analyzing image...</span>
+                <ul id="autoRecommendationReasons"></ul>
+              </div>
+
+              <div class="control">
+                <label for="toneMode">Tone mode</label>
+                <select id="toneMode">
+                  <option value="off">Off</option>
+                  <option value="contrast">Contrast</option>
+                  <option value="scurve">S-curve</option>
+                </select>
+              </div>
+
+              <div class="control">
+                <label for="colorMatching">Matching</label>
+                <select id="colorMatching">
+                  <option value="rgb">RGB</option>
+                  <option value="lab">LAB</option>
+                </select>
+              </div>
+
+              <div class="control">
+                <label for="exposure">Exposure</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="exposure"
+                    min="0.5"
+                    max="2"
+                    step="0.05"
+                    value="1"
+                  />
+                  <output data-for="exposure"></output>
+                </div>
+              </div>
+
+              <div class="control">
+                <label for="saturation">Saturation</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="saturation"
+                    min="0"
+                    max="2"
+                    step="0.05"
+                    value="1"
+                  />
+                  <output data-for="saturation"></output>
+                </div>
+              </div>
+
+              <div class="control full" data-tone-panel="contrast">
+                <label for="contrast">Contrast</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="contrast"
+                    min="0.5"
+                    max="2"
+                    step="0.05"
+                    value="1"
+                  />
+                  <output data-for="contrast"></output>
+                </div>
+              </div>
+
+              <div class="control" data-tone-panel="scurve">
+                <label for="scurveStrength">S-curve</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="scurveStrength"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="0.9"
+                  />
+                  <output data-for="scurveStrength"></output>
+                </div>
+              </div>
+
+              <div class="control" data-tone-panel="scurve">
+                <label for="shadowBoost">Shadows</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="shadowBoost"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="0"
+                  />
+                  <output data-for="shadowBoost"></output>
+                </div>
+              </div>
+
+              <div class="control" data-tone-panel="scurve">
+                <label for="highlightCompress">Highlights</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="highlightCompress"
+                    min="0.5"
+                    max="5"
+                    step="0.05"
+                    value="1.5"
+                  />
+                  <output data-for="highlightCompress"></output>
+                </div>
+              </div>
+
+              <div class="control" data-tone-panel="scurve">
+                <label for="midpoint">Midpoint</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="midpoint"
+                    min="0.3"
+                    max="0.7"
+                    step="0.01"
+                    value="0.5"
+                  />
+                  <output data-for="midpoint"></output>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><h3>Range</h3></legend>
+            <div class="control-grid">
+              <div class="control">
+                <label for="dynamicRangeMode">Mode</label>
+                <select id="dynamicRangeMode">
+                  <option value="off">Off</option>
+                  <option value="display">Display</option>
+                  <option value="auto">Auto</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="dynamicRangeStrength">Strength</label>
+                <div class="range-row">
+                  <input
+                    type="range"
+                    id="dynamicRangeStrength"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="1"
+                  />
+                  <output data-for="dynamicRangeStrength"></output>
+                </div>
+              </div>
+              <div class="control" data-drc-auto>
+                <label for="lowPercentile">Low %</label>
+                <input
+                  type="number"
+                  id="lowPercentile"
+                  min="0"
+                  max="0.25"
+                  step="0.005"
+                  value="0.01"
+                />
+              </div>
+              <div class="control" data-drc-auto>
+                <label for="highPercentile">High %</label>
+                <input
+                  type="number"
+                  id="highPercentile"
+                  min="0.75"
+                  max="1"
+                  step="0.005"
+                  value="0.99"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><h3>Dither</h3></legend>
+            <div class="control-grid">
+              <div class="control">
+                <label for="ditheringType">Type</label>
+                <select id="ditheringType">
+                  <option value="errorDiffusion">Error diffusion</option>
+                  <option value="ordered">Ordered</option>
+                  <option value="random">Random</option>
+                  <option value="quantizationOnly">Quantization only</option>
+                </select>
+              </div>
+
+              <div class="control">
+                <label for="errorDiffusionMatrix">Kernel</label>
+                <select id="errorDiffusionMatrix">
+                  <option value="floydSteinberg">Floyd-Steinberg</option>
+                  <option value="atkinson">Atkinson</option>
+                  <option value="falseFloydSteinberg">
+                    False Floyd-Steinberg
+                  </option>
+                  <option value="jarvis">Jarvis</option>
+                  <option value="stucki">Stucki</option>
+                  <option value="burkes">Burkes</option>
+                  <option value="sierra3">Sierra-3</option>
+                  <option value="sierra2">Sierra-2</option>
+                  <option value="sierra2-4a">Sierra-2-4A</option>
+                </select>
+              </div>
+
+              <label class="check">
+                <input type="checkbox" id="serpentine" checked />
+                Serpentine
+              </label>
+
+              <div class="control">
+                <label for="randomDitheringType">Random</label>
+                <select id="randomDitheringType">
+                  <option value="blackAndWhite">Black and white</option>
+                  <option value="rgb">RGB</option>
+                </select>
+              </div>
+
+              <div class="control">
+                <label for="orderedDitheringMatrixW">Matrix W</label>
+                <input
+                  type="number"
+                  id="orderedDitheringMatrixW"
+                  value="4"
+                  min="1"
+                  max="8"
+                />
+              </div>
+              <div class="control">
+                <label for="orderedDitheringMatrixH">Matrix H</label>
+                <input
+                  type="number"
+                  id="orderedDitheringMatrixH"
+                  value="4"
+                  min="1"
+                  max="8"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>
+              <div class="config-head">
+                <h3>Config JSON</h3>
+                <button
+                  id="copyConfigButton"
+                  class="icon-button"
+                  type="button"
+                  title="Copy config"
+                  aria-label="Copy config"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M8 8h10v12H8zM6 16H4V4h12v2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </legend>
+            <pre id="configOutput" class="config-output" aria-label="Current JSON config"></pre>
+          </fieldset>
+
+          <fieldset>
+            <legend>
+              <div class="config-head">
+                <h3>JS Example</h3>
+                <button
+                  id="copyJsExampleButton"
+                  class="icon-button"
+                  type="button"
+                  title="Copy JavaScript example"
+                  aria-label="Copy JavaScript example"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M8 8h10v12H8zM6 16H4V4h12v2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </legend>
+            <pre id="jsExampleOutput" class="config-output js" aria-label="Current JavaScript example"></pre>
+          </fieldset>
+        </div>
+      </aside>
+
+      <section class="workspace" aria-label="Image previews">
+        <div class="workspace-tools">
+          <button
+            id="toggleOriginalSizeButton"
+            class="button"
+            type="button"
+            aria-pressed="false"
+          >
+            Show original size
+          </button>
+        </div>
+
+        <div id="canvasGrid" class="canvas-grid">
+          <article class="preview">
+            <div class="preview-head">
+              <div class="preview-title">
+                <h2>Input</h2>
+                <p class="preview-subtitle">Your input image</p>
+              </div>
+            </div>
+            <canvas id="inputCanvas"></canvas>
+          </article>
+
+          <article class="preview">
+            <div class="preview-head">
+              <div class="preview-title">
+                <h2>Dithered</h2>
+                <p class="preview-subtitle">
+                  Emulating how the image will look in the Display
+                </p>
+              </div>
+              <a id="downloadLink" class="button" href="#" download="dithered.png">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                PNG
+              </a>
+            </div>
+            <canvas id="outputCanvas"></canvas>
+          </article>
+
+          <article class="preview">
+            <div class="preview-head">
+              <div class="preview-title">
+                <h2>Device</h2>
+                <p class="preview-subtitle">Actual image send to the display</p>
+              </div>
+              <a
+                id="downloadDeviceColorsLink"
+                class="button"
+                href="#"
+                download="dithered-device-colors.png"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                PNG
+              </a>
+            </div>
+            <canvas id="deviceColorsCanvas"></canvas>
+          </article>
+        </div>
+      </section>
+    </main>
   </body>
 </html>
