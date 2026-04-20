@@ -1,21 +1,45 @@
 {
-  "default": ["#000", "#fff"],
-  "gameboy": ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"],
+  "default": [
+    { "name": "black", "color": "#000", "deviceColor": "#212121" },
+    { "name": "white", "color": "#fff", "deviceColor": "#e6e6e6" }
+  ],
+  "gameboy": [
+    { "name": "gameboy0", "color": "#0f380f", "deviceColor": "#0F0" },
+    { "name": "gameboy1", "color": "#306230", "deviceColor": "#3F0" },
+    { "name": "gameboy2", "color": "#8bac0f", "deviceColor": "#7F0" },
+    { "name": "gameboy3", "color": "#9bbc0f", "deviceColor": "#FF0" }
+  ],
+  "spectra6legacy": [
+    { "name": "black", "color": "#191E21", "deviceColor": "#000000" },
+    { "name": "white", "color": "#e8e8e8", "deviceColor": "#FFFFFF" },
+    { "name": "blue", "color": "#2157ba", "deviceColor": "#0000FF" },
+    { "name": "green", "color": "#125f20", "deviceColor": "#00FF00" },
+    { "name": "red", "color": "#b21318", "deviceColor": "#FF0000" },
+    { "name": "yellow", "color": "#efde44", "deviceColor": "#FFFF00" }
+  ],
   "spectra6": [
-    "#191E21",
-    "#e8e8e8",
-    "#2157ba",
-    "#125f20",
-    "#b21318",
-    "#efde44"
+    { "name": "black", "color": "#1F2226", "deviceColor": "#000000" },
+    { "name": "white", "color": "#B9C7C9", "deviceColor": "#FFFFFF" },
+    { "name": "blue", "color": "#233F8E", "deviceColor": "#0000FF" },
+    { "name": "green", "color": "#35563A", "deviceColor": "#00FF00" },
+    { "name": "red", "color": "#62201E", "deviceColor": "#FF0000" },
+    { "name": "yellow", "color": "#C1BB1E", "deviceColor": "#FFFF00" }
+  ],
+  "aitjcize-spectra6": [
+    { "name": "black", "color": "#020202", "deviceColor": "#000000" },
+    { "name": "white", "color": "#BEC8C8", "deviceColor": "#FFFFFF" },
+    { "name": "blue", "color": "#05409E", "deviceColor": "#0000FF" },
+    { "name": "green", "color": "#27663C", "deviceColor": "#00FF00" },
+    { "name": "red", "color": "#871300", "deviceColor": "#FF0000" },
+    { "name": "yellow", "color": "#CDCA00", "deviceColor": "#FFFF00" }
   ],
   "acep": [
-    "#191E21",
-    "#F1F1F1",
-    "#31318F",
-    "#53A428",
-    "#D20E13",
-    "#B85E1C",
-    "#F3CF11"
+    { "name": "black", "color": "#191E21", "deviceColor": "#000" },
+    { "name": "white", "color": "#F1F1F1", "deviceColor": "#fff" },
+    { "name": "blue", "color": "#31318F", "deviceColor": "#0000FF" },
+    { "name": "green", "color": "#53A428", "deviceColor": "#00FF00" },
+    { "name": "red", "color": "#D20E13", "deviceColor": "#FF0000" },
+    { "name": "orange", "color": "#B85E1C", "deviceColor": "#FF8000" },
+    { "name": "yellow", "color": "#F3CF11", "deviceColor": "#FFFF00" }
   ]
 }
