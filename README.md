@@ -1,6 +1,6 @@
 # EPD Optimize
 
-[Interactive demo](https://utzel-butzel.github.io/epdoptimize/)
+[Interactive demo](https://paperlesspaper.github.io/epdoptimize/)
 
 A JavaScript library for reducing, tone-mapping, and dithering images for color e-paper displays.
 
@@ -14,7 +14,7 @@ The library works in browser JavaScript with the Canvas API and in Node.js when 
 
 You can order our Spectra 6 eInk picture frame [here](https://paperlesspaper.de/buy-7-inch-epaper-picture-frame).
 
-[![Node.js Package](https://github.com/Utzel-Butzel/epdoptimize/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/Utzel-Butzel/epdoptimize/actions/workflows/npm-publish.yml)
+[![Node.js Package](https://github.com/paperlesspaper/epdoptimize/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/paperlesspaper/epdoptimize/actions/workflows/npm-publish.yml)
 
 ## Supported Displays
 
@@ -31,7 +31,7 @@ Built-in palette exports currently include:
 - `acepPalette`
 - `gameboyPalette`
 
-![Intro image](https://raw.githubusercontent.com/Utzel-Butzel/epdoptimize/refs/heads/main/intro-image.jpg)
+![Intro image](https://raw.githubusercontent.com/paperlesspaper/epdoptimize/refs/heads/main/intro-image.jpg)
 
 ## Features
 
@@ -485,14 +485,14 @@ Dithering creates the impression of intermediate colors by distributing quantiza
 ## Resources
 
 - [paperlesspaper](https://paperlesspaper.de)
-- [Interactive demo](https://utzel-butzel.github.io/epdoptimize/)
-- [epaper-image-convert](https://github.com/aitjcize/epaper-image-convert), the reference project for several tone mapping, range compression, and palette ideas.
+- [Interactive demo](https://paperlesspaper.github.io/epdoptimize/)
 
 ## Credits
 
 - [Dither me this](https://github.com/DitheringIdiot/dither-me-this)
 - [Inkify](https://github.com/cmdwtf/Inkify)
 - [epaper-image-convert](https://github.com/aitjcize/epaper-image-convert)
+- [eInk Dither Tester](https://github.com/mattcarter11/eink-dithering-tester)
 
 ---
 
