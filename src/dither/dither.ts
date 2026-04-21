@@ -600,4 +600,4 @@ const imageDataToCanvas = (imageData: ImageDataLike, canvas: CanvasLike) => {
   return canvas;
 };
 
-export {ditherImage};
+export { ditherImage };
