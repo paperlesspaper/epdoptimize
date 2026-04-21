@@ -391,6 +391,25 @@
         padding: 0.75rem;
       }
 
+      .canvas-frame {
+        min-width: 0;
+        max-height: 72vh;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background:
+          linear-gradient(45deg, #eff2f5 25%, transparent 25%),
+          linear-gradient(-45deg, #eff2f5 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #eff2f5 75%),
+          linear-gradient(-45deg, transparent 75%, #eff2f5 75%);
+        background-position:
+          0 0,
+          0 8px,
+          8px -8px,
+          -8px 0;
+        background-size: 16px 16px;
+      }
+
       .preview-head {
         display: flex;
         align-items: center;
@@ -415,18 +434,11 @@
         width: 100%;
         max-height: 72vh;
         object-fit: contain;
-        border: 1px solid var(--line);
-        background:
-          linear-gradient(45deg, #eff2f5 25%, transparent 25%),
-          linear-gradient(-45deg, #eff2f5 25%, transparent 25%),
-          linear-gradient(45deg, transparent 75%, #eff2f5 75%),
-          linear-gradient(-45deg, transparent 75%, #eff2f5 75%);
-        background-position:
-          0 0,
-          0 8px,
-          8px -8px,
-          -8px 0;
-        background-size: 16px 16px;
+      }
+
+      .canvas-grid.original-size .canvas-frame {
+        overflow: auto;
+        overscroll-behavior: contain;
       }
 
       .canvas-grid.original-size canvas {
@@ -574,7 +586,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/epdoptimize/assets/index-BbgRgElI.js"></script>
+    <script type="module" crossorigin src="/epdoptimize/assets/index-BFdlq-aM.js"></script>
   </head>
   <body>
     <header>
@@ -1048,7 +1060,9 @@
                 <p class="preview-subtitle">Your input image</p>
               </div>
             </div>
-            <canvas id="inputCanvas"></canvas>
+            <div class="canvas-frame" data-scroll-sync>
+              <canvas id="inputCanvas"></canvas>
+            </div>
           </article>
 
           <article class="preview">
@@ -1078,7 +1092,9 @@
                 PNG
               </a>
             </div>
-            <canvas id="outputCanvas"></canvas>
+            <div class="canvas-frame" data-scroll-sync>
+              <canvas id="outputCanvas"></canvas>
+            </div>
           </article>
 
           <article class="preview">
@@ -1106,7 +1122,9 @@
                 PNG
               </a>
             </div>
-            <canvas id="deviceColorsCanvas"></canvas>
+            <div class="canvas-frame" data-scroll-sync>
+              <canvas id="deviceColorsCanvas"></canvas>
+            </div>
           </article>
         </div>
       </section>
