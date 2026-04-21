@@ -313,7 +313,7 @@ const getPresetDefaults = (presetName: ProcessingPresetName | undefined) => {
   } satisfies Partial<DitherImageOptions>;
 };
 
-const dither = async (
+const ditherImage = async (
   sourceCanvas: CanvasLike,
   canvas: CanvasLike,
   opts: DitherImageOptions = {}
@@ -600,4 +600,4 @@ const imageDataToCanvas = (imageData: ImageDataLike, canvas: CanvasLike) => {
   return canvas;
 };
 
-export default dither;
+export { ditherImage };
