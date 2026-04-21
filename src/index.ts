@@ -74,7 +74,7 @@ export type {
   ReplaceColorsPalette,
 } from "./replaceColors/replaceColors";
 
-export { default as ditherImage } from "./dither/dither";
+export { ditherImage } from "./dither/dither";
 export {
   getProcessingPreset,
   getProcessingPresetNames,
