@@ -24,10 +24,10 @@ You can order our Spectra 6 eInk picture frame [here](https://paperlesspaper.de/
 
 Built-in palette exports currently include:
 
-- `defaultPalette`
-- `spectra6Palette`
-- `spectra6legacyPalette`
-- `aitjcizeSpectra6Palette`
+- `defaultPalette` (black and white)
+- `aitjcizeSpectra6Palette` (Spectra 6)
+- `spectra6Palette` (not recommended)
+- `spectra6legacyPalette` (not recommended)
 - `acepPalette`
 - `gameboyPalette`
 
@@ -59,21 +59,25 @@ npm install epdoptimize
 ```
 
 ```js
-import { ditherImage, replaceColors, spectra6Palette } from "epdoptimize";
+import {
+  ditherImage,
+  replaceColors,
+  aitjcizeSpectra6Palette,
+} from "epdoptimize";
 
 const inputCanvas = document.getElementById("inputCanvas");
 const ditheredCanvas = document.getElementById("ditheredCanvas");
 const deviceCanvas = document.getElementById("deviceCanvas");
 
 await ditherImage(inputCanvas, ditheredCanvas, {
-  palette: spectra6Palette,
+  palette: aitjcizeSpectra6Palette,
   processingPreset: "balanced",
   ditheringType: "errorDiffusion",
   errorDiffusionMatrix: "floydSteinberg",
   serpentine: true,
 });
 
-replaceColors(ditheredCanvas, deviceCanvas, spectra6Palette);
+replaceColors(ditheredCanvas, deviceCanvas, aitjcizeSpectra6Palette);
 ```
 
 `ditherImage` uses each entry's calibrated `color` value. `replaceColors` then maps every matching `color` to its corresponding `deviceColor`.
@@ -97,7 +101,7 @@ await ditherImage(inputCanvas, ditheredCanvas, {
   palette: spectra6Palette,
 });
 
-replaceColors(ditheredCanvas, deviceCanvas, spectra6Palette);
+replaceColors(ditheredCanvas, deviceCanvas, aitjcizeSpectra6Palette);
 
 console.log(suggestion.imageKind);
 console.log(suggestion.reasons);
@@ -106,9 +110,13 @@ console.log(suggestion.reasons);
 The optional `intent` can steer the recommendation:
 
 ```js
-const suggestion = suggestCanvasProcessingOptions(inputCanvas, spectra6Palette, {
-  intent: "readable",
-});
+const suggestion = suggestCanvasProcessingOptions(
+  inputCanvas,
+  aitjcizeSpectra6Palette,
+  {
+    intent: "readable",
+  },
+);
 ```
 
 Available intents are `natural`, `vivid`, `readable`, `faithful`, and `lowNoise`.
@@ -192,10 +200,14 @@ await ditherImage(inputCanvas, ditheredCanvas, {
 The demo exposes a compact JSON config and a matching JS example. The generated config includes the selected palette export name and only the dither options that differ from defaults or preset values. When the demo's **Auto** preset is selected, Auto is resolved into concrete `ditherOptions`.
 
 ```js
-import { ditherImage, replaceColors, spectra6Palette } from "epdoptimize";
+import {
+  ditherImage,
+  replaceColors,
+  aitjcizeSpectra6Palette,
+} from "epdoptimize";
 
 const config = {
-  palette: "spectra6Palette",
+  palette: "aitjcizeSpectra6Palette",
   ditherOptions: {
     processingPreset: "dynamic",
     errorDiffusionMatrix: "stucki",
@@ -296,18 +308,21 @@ scores, and human-readable reasons.
 import {
   ditherImage,
   replaceColors,
-  spectra6Palette,
-  suggestCanvasProcessingOptions
+  aitjcizeSpectra6Palette,
+  suggestCanvasProcessingOptions,
 } from "epdoptimize";
 
-const suggestion = suggestCanvasProcessingOptions(inputCanvas, spectra6Palette);
+const suggestion = suggestCanvasProcessingOptions(
+  inputCanvas,
+  aitjcizeSpectra6Palette,
+);
 
 await ditherImage(inputCanvas, ditheredCanvas, {
   ...suggestion.ditherOptions,
-  palette: spectra6Palette
+  palette: aitjcizeSpectra6Palette,
 });
 
-replaceColors(ditheredCanvas, deviceCanvas, spectra6Palette);
+replaceColors(ditheredCanvas, deviceCanvas, aitjcizeSpectra6Palette);
 ```
 
 The optional `intent` can be `natural`, `vivid`, `readable`, `faithful`, or
@@ -373,23 +388,23 @@ import {
 
 ## Dithering Options
 
-| Option                    | Type                                | Default            | Description                                                                                                                                                                                |
-| ------------------------- | ----------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `palette`                 | string / string[] / palette entries | `"default"`        | Palette to use for quantization. Prefer a built-in palette export or combined palette entries with `color` and `deviceColor`; plain hex arrays work for dither-only previews.              |
+| Option                    | Type                                | Default            | Description                                                                                                                                                                                                                                        |
+| ------------------------- | ----------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `palette`                 | string / string[] / palette entries | `"default"`        | Palette to use for quantization. Prefer a built-in palette export or combined palette entries with `color` and `deviceColor`; plain hex arrays work for dither-only previews.                                                                      |
 | `processingPreset`        | string                              | `undefined`        | Preset name. Options: `balanced`, `dynamic`, `vivid`, `soft`, `grayscale`. Presets fill tone mapping, dynamic range compression, color matching, and diffusion defaults unless overridden. Use `suggestProcessingOptions` for automatic selection. |
-| `ditheringType`           | string                              | `"errorDiffusion"` | Main dithering mode. Options: `errorDiffusion`, `ordered`, `random`, `quantizationOnly`.                                                                                                   |
-| `errorDiffusionMatrix`    | string                              | `"floydSteinberg"` | Error diffusion kernel. Options include `floydSteinberg`, `atkinson`, `falseFloydSteinberg`, `jarvis`, `stucki`, `burkes`, `sierra3`, `sierra2`, `sierra2-4a`.                             |
-| `algorithm`               | string                              | `undefined`        | Backwards-compatible alias for `errorDiffusionMatrix`.                                                                                                                                     |
-| `serpentine`              | boolean                             | `false`            | Alternates scan direction on each row for error diffusion.                                                                                                                                 |
-| `orderedDitheringType`    | string                              | `"bayer"`          | Type of ordered dithering. Currently `bayer`.                                                                                                                                              |
-| `orderedDitheringMatrix`  | [number, number]                    | `[4, 4]`           | Size of the Bayer matrix for ordered dithering.                                                                                                                                            |
-| `randomDitheringType`     | string                              | `"blackAndWhite"`  | Random mode. Options: `blackAndWhite`, `rgb`.                                                                                                                                              |
-| `colorMatching`           | string                              | `"rgb"`            | Palette distance model. Options: `rgb`, `lab`.                                                                                                                                             |
-| `toneMapping`             | object                              | `undefined`        | Exposure, saturation, contrast, or S-curve preprocessing.                                                                                                                                  |
-| `dynamicRangeCompression` | object / boolean                    | `undefined`        | LAB lightness compression. Use `{ mode: "display" }`, `{ mode: "auto" }`, or `{ mode: "off" }`.                                                                                            |
-| `levelCompression`        | object                              | `undefined`        | Optional legacy/preprocessing range remap with `perChannel` or `luma` mode.                                                                                                                |
-| `sampleColorsFromImage`   | boolean                             | `false`            | Reserved for image-derived palettes.                                                                                                                                                       |
-| `numberOfSampleColors`    | number                              | `10`               | Number of colors to sample when image-derived palettes are enabled.                                                                                                                        |
+| `ditheringType`           | string                              | `"errorDiffusion"` | Main dithering mode. Options: `errorDiffusion`, `ordered`, `random`, `quantizationOnly`.                                                                                                                                                           |
+| `errorDiffusionMatrix`    | string                              | `"floydSteinberg"` | Error diffusion kernel. Options include `floydSteinberg`, `atkinson`, `falseFloydSteinberg`, `jarvis`, `stucki`, `burkes`, `sierra3`, `sierra2`, `sierra2-4a`.                                                                                     |
+| `algorithm`               | string                              | `undefined`        | Backwards-compatible alias for `errorDiffusionMatrix`.                                                                                                                                                                                             |
+| `serpentine`              | boolean                             | `false`            | Alternates scan direction on each row for error diffusion.                                                                                                                                                                                         |
+| `orderedDitheringType`    | string                              | `"bayer"`          | Type of ordered dithering. Currently `bayer`.                                                                                                                                                                                                      |
+| `orderedDitheringMatrix`  | [number, number]                    | `[4, 4]`           | Size of the Bayer matrix for ordered dithering.                                                                                                                                                                                                    |
+| `randomDitheringType`     | string                              | `"blackAndWhite"`  | Random mode. Options: `blackAndWhite`, `rgb`.                                                                                                                                                                                                      |
+| `colorMatching`           | string                              | `"rgb"`            | Palette distance model. Options: `rgb`, `lab`.                                                                                                                                                                                                     |
+| `toneMapping`             | object                              | `undefined`        | Exposure, saturation, contrast, or S-curve preprocessing.                                                                                                                                                                                          |
+| `dynamicRangeCompression` | object / boolean                    | `undefined`        | LAB lightness compression. Use `{ mode: "display" }`, `{ mode: "auto" }`, or `{ mode: "off" }`.                                                                                                                                                    |
+| `levelCompression`        | object                              | `undefined`        | Optional legacy/preprocessing range remap with `perChannel` or `luma` mode.                                                                                                                                                                        |
+| `sampleColorsFromImage`   | boolean                             | `false`            | Reserved for image-derived palettes.                                                                                                                                                                                                               |
+| `numberOfSampleColors`    | number                              | `10`               | Number of colors to sample when image-derived palettes are enabled.                                                                                                                                                                                |
 
 ## Tone Mapping
 
