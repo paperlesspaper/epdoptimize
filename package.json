@@ -1,18 +1,32 @@
 {
   "name": "epdoptimize",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Efficiently optimize EPD (Electronic Paper Display) images",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/Utzel-Butzel/epdoptimize.git"
   },
   "scripts": {
-    "build": "vite build",
-    "prepare": "npm run build",
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "vite build",
+    "build:types": "tsc -p tsconfig.build.json",
+    "generate:sample-previews": "./scripts/generate-sample-previews.sh",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "npm run build",
     "examples:dev": "vite --config examples/vite.config.js",
     "build:examples": "vite build --config examples/vite.config.js && cp examples/example-dither.jpg dist/examples/example-dither.jpg",
     "predeploy": "npm run build:examples",

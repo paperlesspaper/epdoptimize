@@ -1,15 +1,17 @@
 import { defineConfig } from "vite";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, "src/index.ts"),
-      name: "MyViteLibrary",
-      formats: ["es", "cjs", "umd"],
-      fileName: (format) => `index.${format}.js`,
+      formats: ["es", "cjs"],
+      fileName: (format) => (format === "es" ? "index.mjs" : "index.cjs"),
     },
-    target: "esnext",
+    target: "es2020",
     sourcemap: true,
     outDir: "dist",
   },

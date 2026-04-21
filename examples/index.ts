@@ -31,6 +31,9 @@ const canvasGrid = $("canvasGrid") as HTMLDivElement;
 const inputCanvas = $("inputCanvas") as HTMLCanvasElement;
 const outputCanvas = $("outputCanvas") as HTMLCanvasElement;
 const deviceColorsCanvas = $("deviceColorsCanvas") as HTMLCanvasElement;
+const canvasFrames = Array.from(
+  document.querySelectorAll<HTMLDivElement>("[data-scroll-sync]"),
+);
 const toggleOriginalSizeButton = $(
   "toggleOriginalSizeButton",
 ) as HTMLButtonElement;
@@ -128,8 +131,13 @@ const PALETTE_OPTIONS = {
     exportName: "defaultPalette",
     palette: defaultPalette,
   },
+  "aitjcize-spectra6": {
+    label: "aitjcize Spectra 6",
+    exportName: "aitjcizeSpectra6Palette",
+    palette: aitjcizeSpectra6Palette,
+  },
   spectra6: {
-    label: "Spectra 6",
+    label: "Spectra 6 (legacy)",
     exportName: "spectra6Palette",
     palette: spectra6Palette,
   },
@@ -137,11 +145,6 @@ const PALETTE_OPTIONS = {
     label: "Spectra 6 Legacy",
     exportName: "spectra6legacyPalette",
     palette: spectra6legacyPalette,
-  },
-  "aitjcize-spectra6": {
-    label: "aitjcize Spectra 6",
-    exportName: "aitjcizeSpectra6Palette",
-    palette: aitjcizeSpectra6Palette,
   },
   acep: {
     label: "Gallery",
@@ -175,6 +178,7 @@ let scheduledProcess = 0;
 let processToken = 0;
 let showOriginalSize = false;
 let currentProcessingSuggestion: ProcessingSuggestion | null = null;
+let syncingCanvasScroll = false;
 
 window.addEventListener("DOMContentLoaded", async () => {
   populateSampleImageOptions();
@@ -196,6 +200,31 @@ function updateCanvasSizeMode() {
     "aria-pressed",
     String(showOriginalSize),
   );
+
+  if (showOriginalSize) {
+    syncCanvasFrameScroll(canvasFrames[0] ?? null);
+    return;
+  }
+
+  for (const frame of canvasFrames) {
+    frame.scrollTo({ left: 0, top: 0 });
+  }
+}
+
+function syncCanvasFrameScroll(source: HTMLDivElement | null) {
+  if (!showOriginalSize || syncingCanvasScroll || !source) return;
+
+  syncingCanvasScroll = true;
+
+  try {
+    for (const frame of canvasFrames) {
+      if (frame === source) continue;
+      frame.scrollLeft = source.scrollLeft;
+      frame.scrollTop = source.scrollTop;
+    }
+  } finally {
+    syncingCanvasScroll = false;
+  }
 }
 
 function formatSampleName(path: string) {
@@ -333,7 +362,9 @@ function loadDeviceTestConfig() {
         ? "portrait"
         : DEFAULT_DEVICE_TEST_CONFIG.orientation;
     imageFitSelect.value =
-      saved.imageFit === "cover" ? "cover" : DEFAULT_DEVICE_TEST_CONFIG.imageFit;
+      saved.imageFit === "cover"
+        ? "cover"
+        : DEFAULT_DEVICE_TEST_CONFIG.imageFit;
     paperIdInput.value =
       typeof saved.paperId === "string"
         ? saved.paperId
@@ -478,7 +509,7 @@ async function testOnDevice() {
     );
 
     const response = await fetch(
-      `http://localhost:5002/v1/papers/uploadSingleImage/${encodeURIComponent(
+      `https://api.paperlesspaper.de/v1/papers/uploadSingleImage/${encodeURIComponent(
         paperId,
       )}`,
       {
@@ -566,7 +597,7 @@ function renderColorPalette(target: HTMLElement, colors: string[]) {
 function getSelectedPaletteOption() {
   return (
     PALETTE_OPTIONS[paletteSelect.value as keyof typeof PALETTE_OPTIONS] ??
-    PALETTE_OPTIONS.spectra6
+    PALETTE_OPTIONS["aitjcize-spectra6"]
   );
 }
 
@@ -684,10 +715,7 @@ function isDynamicRangePresetValue() {
 
   if (presetMode === "auto") {
     return (
-      numbersEqual(
-        current.lowPercentile,
-        presetRange.lowPercentile ?? 0.01,
-      ) &&
+      numbersEqual(current.lowPercentile, presetRange.lowPercentile ?? 0.01) &&
       numbersEqual(current.highPercentile, presetRange.highPercentile ?? 0.99)
     );
   }
@@ -744,7 +772,8 @@ function getConfigDitherOptionsFromUI() {
 
   if (
     errorDiffusionMatrixSelect.value !==
-    (preset?.errorDiffusionMatrix ?? DEFAULT_DITHER_OPTIONS.errorDiffusionMatrix)
+    (preset?.errorDiffusionMatrix ??
+      DEFAULT_DITHER_OPTIONS.errorDiffusionMatrix)
   ) {
     configOptions.errorDiffusionMatrix = errorDiffusionMatrixSelect.value;
   }
@@ -754,8 +783,7 @@ function getConfigDitherOptionsFromUI() {
   }
 
   if (!isDynamicRangePresetValue()) {
-    configOptions.dynamicRangeCompression =
-      getDynamicRangeCompressionFromUI();
+    configOptions.dynamicRangeCompression = getDynamicRangeCompressionFromUI();
   }
 
   return configOptions;
@@ -815,7 +843,8 @@ function getCompactDitherOptions(options: Partial<DitherImageOptions>) {
   if (
     options.errorDiffusionMatrix &&
     options.errorDiffusionMatrix !==
-      (preset?.errorDiffusionMatrix ?? DEFAULT_DITHER_OPTIONS.errorDiffusionMatrix)
+      (preset?.errorDiffusionMatrix ??
+        DEFAULT_DITHER_OPTIONS.errorDiffusionMatrix)
   ) {
     configOptions.errorDiffusionMatrix = options.errorDiffusionMatrix;
   }
@@ -1111,13 +1140,15 @@ copyJsExampleButton.addEventListener("click", async () => {
   await navigator.clipboard.writeText(jsExampleOutput.textContent ?? "");
 });
 
-[screenResolutionSelect, orientationSelect, imageFitSelect].forEach((select) => {
-  select.addEventListener("change", () => {
-    saveDeviceTestConfig();
-    setDeviceTestStatus("");
-    scheduleProcessImage();
-  });
-});
+[screenResolutionSelect, orientationSelect, imageFitSelect].forEach(
+  (select) => {
+    select.addEventListener("change", () => {
+      saveDeviceTestConfig();
+      setDeviceTestStatus("");
+      scheduleProcessImage();
+    });
+  },
+);
 
 [paperIdInput, apiKeyInput].forEach((input) => {
   input.addEventListener("input", () => {
@@ -1132,3 +1163,9 @@ toggleOriginalSizeButton.addEventListener("click", () => {
   showOriginalSize = !showOriginalSize;
   updateCanvasSizeMode();
 });
+
+for (const frame of canvasFrames) {
+  frame.addEventListener("scroll", () => {
+    syncCanvasFrameScroll(frame);
+  });
+}

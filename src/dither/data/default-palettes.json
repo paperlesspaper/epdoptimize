@@ -3,6 +3,14 @@
     { "name": "black", "color": "#000", "deviceColor": "#212121" },
     { "name": "white", "color": "#fff", "deviceColor": "#e6e6e6" }
   ],
+  "aitjcize-spectra6": [
+    { "name": "black", "color": "#020202", "deviceColor": "#000000" },
+    { "name": "white", "color": "#BEC8C8", "deviceColor": "#FFFFFF" },
+    { "name": "blue", "color": "#05409E", "deviceColor": "#0000FF" },
+    { "name": "green", "color": "#27663C", "deviceColor": "#00FF00" },
+    { "name": "red", "color": "#871300", "deviceColor": "#FF0000" },
+    { "name": "yellow", "color": "#CDCA00", "deviceColor": "#FFFF00" }
+  ],
   "gameboy": [
     { "name": "gameboy0", "color": "#0f380f", "deviceColor": "#0F0" },
     { "name": "gameboy1", "color": "#306230", "deviceColor": "#3F0" },
@@ -24,14 +32,6 @@
     { "name": "green", "color": "#35563A", "deviceColor": "#00FF00" },
     { "name": "red", "color": "#62201E", "deviceColor": "#FF0000" },
     { "name": "yellow", "color": "#C1BB1E", "deviceColor": "#FFFF00" }
-  ],
-  "aitjcize-spectra6": [
-    { "name": "black", "color": "#020202", "deviceColor": "#000000" },
-    { "name": "white", "color": "#BEC8C8", "deviceColor": "#FFFFFF" },
-    { "name": "blue", "color": "#05409E", "deviceColor": "#0000FF" },
-    { "name": "green", "color": "#27663C", "deviceColor": "#00FF00" },
-    { "name": "red", "color": "#871300", "deviceColor": "#FF0000" },
-    { "name": "yellow", "color": "#CDCA00", "deviceColor": "#FFFF00" }
   ],
   "acep": [
     { "name": "black", "color": "#191E21", "deviceColor": "#000" },
