@@ -90,15 +90,15 @@ If you do not want to choose a preset manually, use the auto recommender. It ana
 import {
   ditherImage,
   replaceColors,
-  spectra6Palette,
+  aitjcizeSpectra6Palette,
   suggestCanvasProcessingOptions,
 } from "epdoptimize";
 
-const suggestion = suggestCanvasProcessingOptions(inputCanvas, spectra6Palette);
+const suggestion = suggestCanvasProcessingOptions(inputCanvas, aitjcizeSpectra6Palette);
 
 await ditherImage(inputCanvas, ditheredCanvas, {
   ...suggestion.ditherOptions,
-  palette: spectra6Palette,
+  palette: aitjcizeSpectra6Palette,
 });
 
 replaceColors(ditheredCanvas, deviceCanvas, aitjcizeSpectra6Palette);
@@ -214,7 +214,7 @@ const config = {
   },
 };
 
-const palette = spectra6Palette;
+const palette = aitjcizeSpectra6Palette;
 
 await ditherImage(inputCanvas, ditheredCanvas, {
   ...config.ditherOptions,
