@@ -4,17 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EPDOptimize Demo</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231d1c19'/%3E%3Cpath d='M8 9h16v4H8zm0 6h11v4H8zm0 6h16v3H8z' fill='%23d6d6d1'/%3E%3C/svg%3E"
+    />
     <style>
       :root {
-        color-scheme: light;
-        --ink: #1d2329;
-        --muted: #64707d;
-        --line: #d8dee5;
-        --panel: #f6f8fa;
-        --paper: #ffffff;
-        --accent: #176f6b;
-        --accent-strong: #0d5b57;
-        --focus: #f4c542;
+        color-scheme: dark;
+        --ink: #f1f1ed;
+        --muted: #a5a49d;
+        --subtle: #7f7e77;
+        --line: #34332f;
+        --line-strong: #4a4943;
+        --panel: #252420;
+        --panel-deep: #1d1c19;
+        --paper: #2d2c27;
+        --paper-raised: #35342f;
+        --canvas-well: #151512;
+        --accent: #c9cac5;
+        --accent-strong: #f2f2ed;
+        --focus: #75c7bd;
+        --danger: #f28b82;
       }
 
       * {
@@ -25,7 +35,7 @@
         margin: 0;
         height: 100vh;
         overflow: hidden;
-        background: var(--paper);
+        background: var(--canvas-well);
         color: var(--ink);
         font-family:
           Inter,
@@ -42,9 +52,10 @@
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
-        padding: 1rem clamp(1rem, 3vw, 2rem);
+        padding: 0.65rem clamp(0.9rem, 2vw, 1.35rem);
         border-bottom: 1px solid var(--line);
-        min-height: 4rem;
+        min-height: 3.2rem;
+        background: #1b1a17;
       }
 
       h1,
@@ -55,70 +66,120 @@
       }
 
       h1 {
-        font-size: 1.25rem;
-        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.95rem;
+        font-weight: 760;
         letter-spacing: 0;
       }
 
+      .brand-icon {
+        display: inline-block;
+        width: 0.9rem;
+        height: 1.12rem;
+        border: 2px solid var(--accent-strong);
+      }
+
       h2 {
-        font-size: 1rem;
-        font-weight: 700;
+        font-size: 0.88rem;
+        font-weight: 740;
       }
 
       h3 {
-        font-size: 0.82rem;
-        color: var(--muted);
-        font-weight: 700;
+        font-size: 0.72rem;
+        color: var(--subtle);
+        font-weight: 760;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.08em;
       }
 
       a {
         color: var(--accent-strong);
+        text-decoration-color: color-mix(
+          in srgb,
+          var(--accent-strong) 45%,
+          transparent
+        );
+        text-underline-offset: 0.18em;
       }
 
       .top-links {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.75rem;
-        font-size: 0.9rem;
+        gap: 0.85rem;
+        font-size: 0.78rem;
+      }
+
+      .github-star-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        min-height: 1.65rem;
+        padding: 0.18rem 0.45rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 4px;
+        background: var(--paper-raised);
+        color: var(--accent-strong);
+        font-weight: 760;
+        text-decoration: none;
+      }
+
+      .github-star-link:hover {
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised));
+      }
+
+      .github-star-link svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        flex: 0 0 auto;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linejoin: round;
       }
 
       main {
         display: grid;
-        grid-template-columns: minmax(18rem, 26rem) minmax(0, 1fr);
-        height: calc(100vh - 4rem);
+        grid-template-columns: minmax(19rem, 25rem) minmax(0, 1fr);
+        height: calc(100vh - 3.2rem);
         min-height: 0;
       }
 
       aside {
         border-right: 1px solid var(--line);
         background: var(--panel);
-        padding: 1rem;
+        padding: 0;
         min-height: 0;
         overflow: auto;
         overscroll-behavior: contain;
+        box-shadow: 10px 0 28px rgba(0, 0, 0, 0.22);
       }
 
       .workspace {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 1rem;
         min-width: 0;
         min-height: 0;
         overflow: auto;
-        padding: 1rem;
+        padding: 0 clamp(0.85rem, 1.5vw, 1.25rem) 1rem;
+        background: var(--canvas-well);
       }
 
       .toolbar {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 0;
       }
 
       fieldset {
         display: grid;
-        gap: 0.75rem;
+        gap: 0.7rem;
         margin: 0;
-        padding: 0 0 1rem;
+        padding: 0.85rem 0.9rem 1rem;
         border: 0;
         border-bottom: 1px solid var(--line);
       }
@@ -129,18 +190,18 @@
       }
 
       legend {
-        padding: 0 0 0.75rem;
+        padding: 0;
       }
 
       .control-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.7rem;
+        gap: 0.65rem 0.75rem;
       }
 
       .control {
         display: grid;
-        gap: 0.35rem;
+        gap: 0.28rem;
         min-width: 0;
       }
 
@@ -150,7 +211,7 @@
 
       label {
         color: var(--muted);
-        font-size: 0.82rem;
+        font-size: 0.76rem;
         font-weight: 650;
       }
 
@@ -160,60 +221,132 @@
       input[type="number"],
       input[type="file"]::file-selector-button {
         width: 100%;
-        min-height: 2.35rem;
+        min-height: 2rem;
         border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--paper);
+        border-radius: 4px;
+        background: var(--panel-deep);
         color: var(--ink);
         font: inherit;
+        font-size: 0.82rem;
       }
 
       select,
       input[type="password"],
       input[type="text"],
       input[type="number"] {
-        padding: 0.45rem 0.55rem;
+        padding: 0.38rem 0.5rem;
       }
 
       input[type="range"] {
+        appearance: none;
         width: 100%;
+        height: 1.2rem;
+        background: transparent;
         accent-color: var(--accent);
+        cursor: ew-resize;
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 0.22rem;
+        border-radius: 999px;
+        background: #11110f;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 0.85rem;
+        height: 0.85rem;
+        margin-top: -0.31rem;
+        border: 1px solid color-mix(in srgb, var(--accent) 68%, white);
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+      }
+
+      input[type="range"]::-moz-range-track {
+        height: 0.22rem;
+        border-radius: 999px;
+        background: #11110f;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 0.85rem;
+        height: 0.85rem;
+        border: 1px solid color-mix(in srgb, var(--accent) 68%, white);
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
       }
 
       input:focus-visible,
       select:focus-visible,
       button:focus-visible,
       a:focus-visible {
-        outline: 3px solid var(--focus);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
 
       .range-row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 3.25rem;
+        grid-template-columns: minmax(0, 1fr) 2.8rem;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.45rem;
       }
 
       output {
-        min-width: 3.25rem;
+        min-width: 2.8rem;
         text-align: right;
         color: var(--ink);
         font-variant-numeric: tabular-nums;
-        font-size: 0.85rem;
+        font-size: 0.78rem;
+      }
+
+      .control.is-disabled,
+      .check.is-disabled {
+        opacity: 0.55;
+      }
+
+      .tone-curve-preview {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2 / 1;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--panel-deep);
+      }
+
+      .range-fitting-preview {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2 / 1;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--panel-deep);
+      }
+
+      .histogram-preview {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2 / 1;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--panel-deep);
       }
 
       .check {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        min-height: 2.35rem;
+        min-height: 2rem;
         color: var(--ink);
+        font-size: 0.82rem;
       }
 
       .file-row {
         display: grid;
-        gap: 0.5rem;
+        gap: 0.45rem;
       }
 
       .image-style {
@@ -221,18 +354,21 @@
         grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         gap: 0.35rem 0.75rem;
-        padding-top: 0.25rem;
+        padding: 0.55rem;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--panel-deep);
       }
 
       .image-style-label,
       .image-style-confidence {
         color: var(--muted);
-        font-size: 0.82rem;
+        font-size: 0.74rem;
         line-height: 1.35;
       }
 
       .image-style-value {
-        font-size: 0.95rem;
+        font-size: 0.88rem;
         font-weight: 750;
         line-height: 1.25;
       }
@@ -242,7 +378,7 @@
         height: 0.35rem;
         overflow: hidden;
         border-radius: 999px;
-        background: var(--line);
+        background: #10100e;
       }
 
       .image-style-meter span {
@@ -252,6 +388,17 @@
         border-radius: inherit;
         background: var(--accent);
         transition: width 160ms ease;
+      }
+
+      .image-style-details {
+        padding-top: 0.15rem;
+      }
+
+      .image-style-details summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.35;
       }
 
       .image-style-metrics {
@@ -270,14 +417,14 @@
 
       .image-style-metrics dt {
         color: var(--muted);
-        font-size: 0.72rem;
+        font-size: 0.7rem;
         line-height: 1.2;
       }
 
       .image-style-metrics dd {
         margin: 0;
         color: var(--ink);
-        font-size: 0.8rem;
+        font-size: 0.76rem;
         font-variant-numeric: tabular-nums;
         line-height: 1.2;
       }
@@ -287,8 +434,12 @@
         gap: 0.35rem;
         grid-column: 1 / -1;
         color: var(--muted);
-        font-size: 0.82rem;
+        font-size: 0.76rem;
         line-height: 1.35;
+        padding: 0.55rem;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--panel-deep);
       }
 
       .auto-recommendation strong {
@@ -302,23 +453,39 @@
         padding-left: 1rem;
       }
 
+      .auto-action {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+
       .sample-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
-        gap: 0.45rem;
+        grid-template-columns: repeat(auto-fill, minmax(3.65rem, 1fr));
+        grid-auto-rows: 3.25rem;
+        align-content: start;
+        gap: 0.35rem;
+        max-height: clamp(10rem, 30vh, 16rem);
+        overflow: auto;
+        overscroll-behavior: contain;
+        padding-right: 0.15rem;
       }
 
       .sample-thumb {
         position: relative;
         display: block;
         width: 100%;
-        aspect-ratio: 4 / 3;
+        height: 100%;
         padding: 0;
         overflow: hidden;
-        border: 2px solid transparent;
-        border-radius: 6px;
-        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--panel-deep);
         cursor: pointer;
+        opacity: 0.74;
+        transition:
+          border-color 120ms ease,
+          opacity 120ms ease,
+          transform 120ms ease;
       }
 
       .sample-thumb img {
@@ -330,7 +497,13 @@
 
       .sample-thumb.selected {
         border-color: var(--accent);
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+        box-shadow: 0 0 0 1px var(--accent);
+        opacity: 1;
+      }
+
+      .sample-thumb:hover {
+        border-color: var(--line-strong);
+        opacity: 1;
       }
 
       .sample-thumb:focus-visible {
@@ -341,16 +514,50 @@
       .palette-strip {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(1.45rem, 1fr));
-        gap: 0.25rem;
-        min-height: 1.75rem;
+        gap: 0.2rem;
+        min-height: 1.45rem;
       }
 
       .color-swatch {
+        position: relative;
         display: block;
-        min-height: 1.75rem;
-        border: 1px solid rgba(29, 35, 41, 0.22);
-        border-radius: 4px;
+        min-height: 1.45rem;
+        border: 1px solid rgba(0, 0, 0, 0.45);
+        border-radius: 3px;
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+        cursor: copy;
+      }
+
+      button.color-swatch {
+        width: 100%;
+        padding: 0;
+        font: inherit;
+      }
+
+      .color-swatch::after {
+        position: absolute;
+        bottom: calc(100% + 0.35rem);
+        left: 50%;
+        z-index: 10;
+        display: none;
+        padding: 0.22rem 0.38rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 3px;
+        background: #11110f;
+        color: var(--ink);
+        content: attr(data-tooltip);
+        font-size: 0.7rem;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.36);
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+
+      .color-swatch:hover::after,
+      .color-swatch:focus-visible::after {
+        display: block;
       }
 
       input[type="file"] {
@@ -363,45 +570,132 @@
         margin-right: 0.75rem;
         padding: 0 0.75rem;
         border-color: transparent;
-        background: var(--accent);
-        color: white;
+        background: var(--paper-raised);
+        color: var(--ink);
         cursor: pointer;
       }
 
       .canvas-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
         gap: 1rem;
         align-items: start;
+        align-content: start;
       }
 
       .workspace-tools {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(10rem, 1fr)) auto;
+        align-items: end;
+        gap: 0.65rem;
+        margin: 0 calc(clamp(0.85rem, 1.5vw, 1.25rem) * -1);
+        padding: 0.75rem clamp(0.85rem, 1.5vw, 1.25rem);
+        border-bottom: 1px solid var(--line);
+        background: #171714;
+      }
+
+      .workspace-control {
+        display: grid;
+        gap: 0.25rem;
+        min-width: 0;
+      }
+
+      .control-label {
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 650;
+      }
+
+      .state-select {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      .segmented-control {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(2.15rem, 1fr);
+        min-height: 2rem;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--panel-deep);
+      }
+
+      .segmented-option {
+        display: inline-grid;
+        place-items: center;
+        min-width: 0;
+        min-height: 2rem;
+        border: 0;
+        border-right: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .segmented-option:last-child {
+        border-right: 0;
+      }
+
+      .segmented-option:hover {
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        color: var(--ink);
+      }
+
+      .segmented-option[aria-checked="true"] {
+        background: color-mix(in srgb, var(--accent) 20%, var(--paper-raised));
+        color: var(--accent-strong);
+      }
+
+      .segmented-option:focus-visible {
+        position: relative;
+        z-index: 1;
+        outline: 2px solid var(--focus);
+        outline-offset: -2px;
+      }
+
+      .segmented-option svg {
+        width: 1.05rem;
+        height: 1.05rem;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
       }
 
       .preview {
         display: grid;
-        gap: 0.75rem;
+        gap: 0;
         min-width: 0;
+        overflow: hidden;
         border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--paper);
-        padding: 0.75rem;
+        border-radius: 5px;
+        background: #1c1b18;
       }
 
       .canvas-frame {
+        display: grid;
+        place-items: center;
         min-width: 0;
-        max-height: 72vh;
+        max-height: 68vh;
         overflow: hidden;
-        border: 1px solid var(--line);
-        border-radius: 6px;
+        border-top: 1px solid var(--line);
         background:
-          linear-gradient(45deg, #eff2f5 25%, transparent 25%),
-          linear-gradient(-45deg, #eff2f5 25%, transparent 25%),
-          linear-gradient(45deg, transparent 75%, #eff2f5 75%),
-          linear-gradient(-45deg, transparent 75%, #eff2f5 75%);
+          linear-gradient(45deg, #20201d 25%, transparent 25%),
+          linear-gradient(-45deg, #20201d 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #20201d 75%),
+          linear-gradient(-45deg, transparent 75%, #20201d 75%);
+        background-color: #171714;
         background-position:
           0 0,
           0 8px,
@@ -415,24 +709,54 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
+        padding: 0.7rem;
       }
 
       .preview-title {
         display: grid;
-        gap: 0.2rem;
+        gap: 0;
         min-width: 0;
       }
 
       .preview-subtitle {
         color: var(--muted);
+        font-size: 0.74rem;
+        line-height: 1.15;
+      }
+
+      .processing-inputs {
+        display: grid;
+        gap: 0;
+        grid-column: 1 / -1;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: processing;
+      }
+
+      .processing-inputs li {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        padding: 0.75rem 0 0.85rem;
+        border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+      }
+
+      .processing-inputs li::before {
+        content: none;
+      }
+
+      .processing-inputs h4 {
+        margin: 0 0 0.55rem;
+        color: var(--ink);
         font-size: 0.82rem;
-        line-height: 1.35;
+        line-height: 1.25;
       }
 
       canvas {
         display: block;
         width: 100%;
-        max-height: 72vh;
+        max-height: 68vh;
         object-fit: contain;
       }
 
@@ -452,18 +776,23 @@
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
-        min-height: 2.1rem;
-        padding: 0.35rem 0.7rem;
-        border: 1px solid var(--accent);
-        border-radius: 6px;
-        background: var(--accent);
-        color: white;
+        min-height: 2rem;
+        padding: 0.32rem 0.65rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 4px;
+        background: var(--paper-raised);
+        color: var(--ink);
         font: inherit;
-        font-size: 0.86rem;
+        font-size: 0.78rem;
         font-weight: 700;
         text-decoration: none;
         white-space: nowrap;
         cursor: pointer;
+      }
+
+      .button:hover {
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 18%, var(--paper-raised));
       }
 
       .button svg {
@@ -483,10 +812,21 @@
         gap: 0.5rem;
       }
 
+      .image-adjustment-actions {
+        display: flex;
+        grid-column: 1 / -1;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+      }
+
+      .image-adjustment-actions .button {
+        flex: 1 1 auto;
+      }
+
       .status-line {
         min-height: 1.1rem;
         color: var(--muted);
-        font-size: 0.82rem;
+        font-size: 0.76rem;
         line-height: 1.35;
       }
 
@@ -495,19 +835,24 @@
       }
 
       .status-line[data-state="error"] {
-        color: #a02828;
+        color: var(--danger);
       }
 
       .icon-button {
         display: inline-grid;
         place-items: center;
-        width: 2.1rem;
-        height: 2.1rem;
+        width: 2rem;
+        height: 2rem;
         border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--paper);
+        border-radius: 4px;
+        background: var(--panel-deep);
         color: var(--ink);
         cursor: pointer;
+      }
+
+      .icon-button:hover {
+        border-color: var(--line-strong);
+        background: var(--paper-raised);
       }
 
       .icon-button svg {
@@ -522,6 +867,34 @@
         gap: 0.75rem;
       }
 
+      .config-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        padding: 0.15rem;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: var(--panel-deep);
+      }
+
+      .config-tab {
+        min-height: 2rem;
+        padding: 0.35rem 0.6rem;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.76rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .config-tab[aria-selected="true"] {
+        background: var(--paper-raised);
+        color: var(--ink);
+      }
+
       .config-block {
         display: grid;
         gap: 0.5rem;
@@ -533,9 +906,9 @@
         overflow: auto;
         padding: 0.75rem;
         border: 1px solid var(--line);
-        border-radius: 6px;
-        background: #11181f;
-        color: #e8edf2;
+        border-radius: 4px;
+        background: #10100e;
+        color: #e6e3d6;
         font-family:
           ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
           "Liberation Mono", monospace;
@@ -568,10 +941,23 @@
           border-right: 0;
           border-bottom: 1px solid var(--line);
           max-height: none;
+          overflow: visible;
+          box-shadow: none;
+        }
+
+        .sample-grid {
+          max-height: 13rem;
         }
 
         .canvas-grid {
           grid-template-columns: 1fr;
+        }
+
+        .workspace-tools {
+          position: static;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          margin-inline: 0;
+          padding-inline: 0;
         }
       }
 
@@ -584,16 +970,71 @@
         .control-grid {
           grid-template-columns: 1fr;
         }
+
+        .workspace {
+          display: block;
+          overflow: visible;
+          padding: 0 0.7rem 0.8rem;
+        }
+
+        .workspace-tools {
+          grid-template-columns: 1fr;
+          gap: 0.55rem;
+        }
+
+        .workspace-tools .button {
+          width: 100%;
+        }
+
+        .sample-grid {
+          display: flex;
+          gap: 0.45rem;
+          max-height: none;
+          overflow-x: auto;
+          overflow-y: hidden;
+          overscroll-behavior-x: contain;
+          overscroll-behavior-y: auto;
+          padding: 0 0 0.25rem;
+          scroll-snap-type: x proximity;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .sample-thumb {
+          flex: 0 0 4.75rem;
+          height: 3.55rem;
+          scroll-snap-align: start;
+        }
+
+        .preview {
+          padding: 0;
+        }
+
+        .preview-head {
+          padding: 0.55rem;
+        }
       }
     </style>
-    <script type="module" crossorigin src="/epdoptimize/assets/index-BFdlq-aM.js"></script>
+    <script type="module" crossorigin src="/epdoptimize/assets/demo-C28A3T6X.js"></script>
+    <link rel="modulepreload" crossorigin href="/epdoptimize/assets/constants-BuyXdO0e.js">
   </head>
   <body>
     <header>
-      <h1>EPDOptimize</h1>
+      <h1><span class="brand-icon" aria-hidden="true"></span>EPDOptimize</h1>
       <nav class="top-links" aria-label="Project links">
         <a href="https://github.com/paperlesspaper/epdoptimize">GitHub</a>
         <a href="http://paperlesspaper.de/en">paperlesspaper</a>
+        <a
+          class="github-star-link"
+          href="https://github.com/paperlesspaper/epdoptimize"
+          aria-label="Star EPDOptimize on GitHub"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="m12 2.8 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.6l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"
+            />
+          </svg>
+          Star on GitHub
+        </a>
       </nav>
     </header>
 
@@ -628,7 +1069,10 @@
                   <span id="imageStyleMeter"></span>
                 </div>
               </div>
-              <dl id="imageStyleMetrics" class="image-style-metrics"></dl>
+              <details class="image-style-details">
+                <summary>Details</summary>
+                <dl id="imageStyleMetrics" class="image-style-metrics"></dl>
+              </details>
             </div>
           </fieldset>
 
@@ -643,6 +1087,10 @@
                     aitjcize Spectra 6
                   </option>
                   <option value="spectra6">Spectra 6</option>
+                  <option value="spectra6-original">Spectra 6 Original</option>
+                  <option value="spectra6-original-preview">
+                    Spectra 6 Original + preview
+                  </option>
                   <option value="spectra6legacy">Spectra 6 Legacy</option>
                   <option value="acep">Gallery</option>
                   <option value="gameboy">Game Boy</option>
@@ -662,33 +1110,538 @@
           </fieldset>
 
           <fieldset>
+            <legend><h3>Processing</h3></legend>
+            <ol class="processing-inputs" aria-label="Processing steps">
+              <li>
+                <div>
+                  <h4>Preset</h4>
+                  <div class="control-grid">
+                    <div class="control full">
+                      <label for="processingPreset">Preset</label>
+                      <select id="processingPreset"></select>
+                    </div>
+                    <div class="control full">
+                      <label for="autoFlow">Auto flow</label>
+                      <select id="autoFlow">
+                        <option value="layered" selected>Layered auto</option>
+                        <option value="previous">Previous auto</option>
+                      </select>
+                    </div>
+                    <div class="image-adjustment-actions">
+                      <button
+                        id="autoAdjustmentsButton"
+                        class="button auto-action"
+                        type="button"
+                      >
+                        Auto image adjustments
+                      </button>
+                      <button
+                        id="resetImageAdjustmentsButton"
+                        class="button auto-action"
+                        type="button"
+                      >
+                        Reset image adjustments
+                      </button>
+                    </div>
+                    <div class="auto-recommendation">
+                      <strong id="autoRecommendationTitle"
+                        >Auto recommendation</strong
+                      >
+                      <ul id="autoRecommendationReasons"></ul>
+                    </div>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div>
+                  <h4>Image tone adjustments</h4>
+                  <div class="control-grid">
+                    <div class="control">
+                      <label for="exposure">Exposure</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="exposure"
+                          min="-1"
+                          max="1"
+                          step="0.05"
+                          value="0"
+                        />
+                        <output data-for="exposure"></output>
+                      </div>
+                    </div>
+
+                    <div class="control">
+                      <label for="saturation">Saturation</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="saturation"
+                          min="-1"
+                          max="1"
+                          step="0.05"
+                          value="0"
+                        />
+                        <output data-for="saturation"></output>
+                      </div>
+                    </div>
+
+                    <div class="control">
+                      <label for="contrast">Contrast</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="contrast"
+                          min="-1"
+                          max="1"
+                          step="0.05"
+                          value="0"
+                        />
+                        <output data-for="contrast"></output>
+                      </div>
+                    </div>
+
+                    <div class="control">
+                      <label for="clarity">Clarity</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="clarity"
+                          min="-1"
+                          max="1"
+                          step="0.02"
+                          value="0"
+                        />
+                        <output data-for="clarity"></output>
+                      </div>
+                    </div>
+
+                    <input type="hidden" id="scurveStrength" value="0" />
+
+                    <div class="control">
+                      <label for="shadowBoost">Shadows</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="shadowBoost"
+                          min="-1"
+                          max="1"
+                          step="0.05"
+                          value="0"
+                        />
+                        <output data-for="shadowBoost"></output>
+                      </div>
+                    </div>
+
+                    <div class="control">
+                      <label for="highlightCompress">Highlights</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="highlightCompress"
+                          min="-1.5"
+                          max="1"
+                          step="0.05"
+                          value="0"
+                        />
+                        <output data-for="highlightCompress"></output>
+                      </div>
+                    </div>
+
+                    <input type="hidden" id="midpoint" value="0.5" />
+
+                    <div class="control full">
+                      <label for="toneCurvePreview">Tone curve</label>
+                      <canvas
+                        id="toneCurvePreview"
+                        class="tone-curve-preview"
+                        width="320"
+                        height="160"
+                        aria-label="Tone curve preview"
+                      ></canvas>
+                    </div>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div>
+                  <h4>Image range fitting</h4>
+                  <div class="control-grid">
+                    <div class="control">
+                      <label for="dynamicRangeMode">Mode</label>
+                      <select id="dynamicRangeMode">
+                        <option value="off">Off</option>
+                        <option value="display">Display</option>
+                        <option value="auto">Auto</option>
+                      </select>
+                    </div>
+                    <div class="control">
+                      <label for="dynamicRangeStrength">Strength</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="dynamicRangeStrength"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value="1"
+                        />
+                        <output data-for="dynamicRangeStrength"></output>
+                      </div>
+                    </div>
+                    <div class="control" data-drc-auto>
+                      <label for="lowPercentile">Low %</label>
+                      <input
+                        type="number"
+                        id="lowPercentile"
+                        min="0"
+                        max="0.25"
+                        step="0.005"
+                        value="0.01"
+                      />
+                    </div>
+                    <div class="control" data-drc-auto>
+                      <label for="highPercentile">High %</label>
+                      <input
+                        type="number"
+                        id="highPercentile"
+                        min="0.75"
+                        max="1"
+                        step="0.005"
+                        value="0.99"
+                      />
+                    </div>
+                    <div class="control full">
+                      <label for="rangeFittingPreview">Range map</label>
+                      <canvas
+                        id="rangeFittingPreview"
+                        class="range-fitting-preview"
+                        width="320"
+                        height="160"
+                        aria-label="Range fitting preview"
+                      ></canvas>
+                    </div>
+                    <div class="control full">
+                      <label for="histogramPreview">Adjusted histogram</label>
+                      <canvas
+                        id="histogramPreview"
+                        class="histogram-preview"
+                        width="320"
+                        height="160"
+                        aria-label="Adjusted histogram preview"
+                      ></canvas>
+                    </div>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div>
+                  <h4>Canvas dithering and matching</h4>
+                  <div class="control-grid">
+                    <div class="control">
+                      <label for="colorMatching">Matching</label>
+                      <select id="colorMatching">
+                        <option value="rgb">RGB</option>
+                        <option value="lab">LAB</option>
+                        <option value="chroma">Chroma experimental</option>
+                      </select>
+                    </div>
+
+                    <div class="control">
+                      <label for="processingEngine">Engine</label>
+                      <select id="processingEngine">
+                        <option value="js">JavaScript</option>
+                        <option value="wasm">WASM</option>
+                        <option value="auto">Auto</option>
+                      </select>
+                    </div>
+
+                    <div class="control">
+                      <label for="ditheringType">Type</label>
+                      <select id="ditheringType">
+                        <option value="errorDiffusion">Error diffusion</option>
+                        <option value="ordered">Ordered</option>
+                        <option value="random">Random</option>
+                        <option value="quantizationOnly">
+                          Quantization only
+                        </option>
+                        <option value="hueMix">Hue mix experimental</option>
+                        <option value="ditherItErrorDiffusion">
+                          DITHER IT: Error diffusion
+                        </option>
+                        <option value="ditherItOrdered">
+                          DITHER IT: Bayer
+                        </option>
+                        <option value="ditherItBlueNoise">
+                          DITHER IT: Blue noise
+                        </option>
+                        <option value="ditherItSimple2D">
+                          DITHER IT: Simple 2D
+                        </option>
+                        <option value="ditherItRiemersma">
+                          DITHER IT: Riemersma
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="control">
+                      <label for="errorDiffusionMatrix">Kernel</label>
+                      <select id="errorDiffusionMatrix">
+                        <option value="floydSteinberg">Floyd-Steinberg</option>
+                        <option value="atkinson">Atkinson</option>
+                        <option value="falseFloydSteinberg">
+                          False Floyd-Steinberg
+                        </option>
+                        <option value="jarvis">Jarvis</option>
+                        <option value="jarvisJudiceNinke">
+                          Jarvis-Judice-Ninke
+                        </option>
+                        <option value="stucki">Stucki</option>
+                        <option value="burkes">Burkes</option>
+                        <option value="sierra3">Sierra-3</option>
+                        <option value="sierra2">Sierra-2</option>
+                        <option value="sierra2-4a">Sierra-2-4A</option>
+                        <option value="fan">Fan</option>
+                        <option value="shiauFan">Shiau-Fan</option>
+                        <option value="shiauFan2">Shiau-Fan 2</option>
+                      </select>
+                    </div>
+
+                    <label class="check">
+                      <input type="checkbox" id="serpentine" checked />
+                      Serpentine
+                    </label>
+
+                    <div class="control">
+                      <label for="randomDitheringType">Random</label>
+                      <select id="randomDitheringType">
+                        <option value="blackAndWhite">Black and white</option>
+                        <option value="rgb">RGB</option>
+                      </select>
+                    </div>
+
+                    <div class="control">
+                      <label for="orderedDitheringMatrixW">Matrix W</label>
+                      <input
+                        type="number"
+                        id="orderedDitheringMatrixW"
+                        value="4"
+                        min="1"
+                        max="16"
+                      />
+                    </div>
+                    <div class="control">
+                      <label for="orderedDitheringMatrixH">Matrix H</label>
+                      <input
+                        type="number"
+                        id="orderedDitheringMatrixH"
+                        value="4"
+                        min="1"
+                        max="16"
+                      />
+                    </div>
+
+                    <label class="check">
+                      <input type="checkbox" id="edgePreservation" />
+                      Edge core (Experimental)
+                    </label>
+
+                    <div class="control">
+                      <label for="edgePreservationStrength">Edge strength</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="edgePreservationStrength"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value="0.65"
+                        />
+                        <output data-for="edgePreservationStrength"></output>
+                      </div>
+                    </div>
+
+                    <label class="check">
+                      <input type="checkbox" id="edgeAntialiasing" />
+                      Anti-tooth band (Experimental)
+                    </label>
+
+                    <div class="control">
+                      <label for="edgeAntialiasingStrength">Band strength</label>
+                      <div class="range-row">
+                        <input
+                          type="range"
+                          id="edgeAntialiasingStrength"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value="0.75"
+                        />
+                        <output data-for="edgeAntialiasingStrength"></output>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </fieldset>
+
+          <fieldset>
+            <legend><h3>Config and examples</h3></legend>
+            <div
+              class="config-tabs"
+              role="tablist"
+              aria-label="Config and code examples"
+            >
+              <button
+                id="configJsonTab"
+                class="config-tab"
+                type="button"
+                role="tab"
+                aria-controls="configJsonPanel"
+                aria-selected="true"
+                data-config-tab="configJson"
+              >
+                Config JSON
+              </button>
+              <button
+                id="jsExampleTab"
+                class="config-tab"
+                type="button"
+                role="tab"
+                aria-controls="jsExamplePanel"
+                aria-selected="false"
+                data-config-tab="jsExample"
+              >
+                JS example
+              </button>
+              <button
+                id="jsAdvancedExampleTab"
+                class="config-tab"
+                type="button"
+                role="tab"
+                aria-controls="jsAdvancedExamplePanel"
+                aria-selected="false"
+                data-config-tab="jsAdvancedExample"
+              >
+                JS advanced
+              </button>
+            </div>
+
+            <div
+              id="configJsonPanel"
+              class="config-block"
+              role="tabpanel"
+              aria-labelledby="configJsonTab"
+              data-config-panel="configJson"
+            >
+              <div class="config-head">
+                <h3>Config JSON</h3>
+                <button
+                  id="copyConfigButton"
+                  class="icon-button"
+                  type="button"
+                  title="Copy config"
+                  aria-label="Copy config"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M8 8h10v12H8zM6 16H4V4h12v2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <pre
+                id="configOutput"
+                class="config-output"
+                aria-label="Current JSON config"
+              ></pre>
+            </div>
+
+            <div
+              id="jsExamplePanel"
+              class="config-block"
+              role="tabpanel"
+              aria-labelledby="jsExampleTab"
+              data-config-panel="jsExample"
+              hidden
+            >
+              <div class="config-head">
+                <h3>JS Example</h3>
+                <button
+                  id="copyJsExampleButton"
+                  class="icon-button"
+                  type="button"
+                  title="Copy JavaScript example"
+                  aria-label="Copy JavaScript example"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M8 8h10v12H8zM6 16H4V4h12v2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <pre
+                id="jsExampleOutput"
+                class="config-output js"
+                aria-label="Current JavaScript example"
+              ></pre>
+            </div>
+
+            <div
+              id="jsAdvancedExamplePanel"
+              class="config-block"
+              role="tabpanel"
+              aria-labelledby="jsAdvancedExampleTab"
+              data-config-panel="jsAdvancedExample"
+              hidden
+            >
+              <div class="config-head">
+                <h3>JS Advanced</h3>
+                <button
+                  id="copyJsAdvancedExampleButton"
+                  class="icon-button"
+                  type="button"
+                  title="Copy advanced JavaScript example"
+                  aria-label="Copy advanced JavaScript example"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M8 8h10v12H8zM6 16H4V4h12v2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <pre
+                id="jsAdvancedExampleOutput"
+                class="config-output js"
+                aria-label="Current advanced JavaScript example"
+              ></pre>
+            </div>
+          </fieldset>
+
+          <fieldset>
             <legend><h3>Device Test</h3></legend>
             <div class="control-grid">
-              <div class="control">
-                <label for="screenResolutionSelect">Screen</label>
-                <select id="screenResolutionSelect">
-                  <option value="openpaper7">
-                    7.3 Inch OpenPaper 7 - 800 x 480
-                  </option>
-                  <option value="openpaperL">
-                    13.3 Inch OpenPaper L - 1600 x 1200
-                  </option>
-                </select>
-              </div>
-              <div class="control">
-                <label for="orientationSelect">Orientation</label>
-                <select id="orientationSelect">
-                  <option value="landscape">Landscape</option>
-                  <option value="portrait">Portrait</option>
-                </select>
-              </div>
-              <div class="control">
-                <label for="imageFitSelect">Image fit</label>
-                <select id="imageFitSelect">
-                  <option value="contain">Contain</option>
-                  <option value="cover">Cover</option>
-                </select>
-              </div>
               <div class="control full">
                 <label for="paperIdInput">Paper ID</label>
                 <input
@@ -720,328 +1673,167 @@
               </div>
             </div>
           </fieldset>
-
-          <fieldset>
-            <legend><h3>Processing</h3></legend>
-            <div class="control-grid">
-              <div class="control full">
-                <label for="processingPreset">Preset</label>
-                <select id="processingPreset"></select>
-              </div>
-              <div class="auto-recommendation">
-                <strong id="autoRecommendationTitle"
-                  >Auto recommendation</strong
-                >
-                <span id="autoRecommendationSummary">Analyzing image...</span>
-                <ul id="autoRecommendationReasons"></ul>
-              </div>
-
-              <div class="control">
-                <label for="toneMode">Tone mode</label>
-                <select id="toneMode">
-                  <option value="off">Off</option>
-                  <option value="contrast">Contrast</option>
-                  <option value="scurve">S-curve</option>
-                </select>
-              </div>
-
-              <div class="control">
-                <label for="colorMatching">Matching</label>
-                <select id="colorMatching">
-                  <option value="rgb">RGB</option>
-                  <option value="lab">LAB</option>
-                </select>
-              </div>
-
-              <div class="control">
-                <label for="exposure">Exposure</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="exposure"
-                    min="0.5"
-                    max="2"
-                    step="0.05"
-                    value="1"
-                  />
-                  <output data-for="exposure"></output>
-                </div>
-              </div>
-
-              <div class="control">
-                <label for="saturation">Saturation</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="saturation"
-                    min="0"
-                    max="2"
-                    step="0.05"
-                    value="1"
-                  />
-                  <output data-for="saturation"></output>
-                </div>
-              </div>
-
-              <div class="control full" data-tone-panel="contrast">
-                <label for="contrast">Contrast</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="contrast"
-                    min="0.5"
-                    max="2"
-                    step="0.05"
-                    value="1"
-                  />
-                  <output data-for="contrast"></output>
-                </div>
-              </div>
-
-              <div class="control" data-tone-panel="scurve">
-                <label for="scurveStrength">S-curve</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="scurveStrength"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value="0.9"
-                  />
-                  <output data-for="scurveStrength"></output>
-                </div>
-              </div>
-
-              <div class="control" data-tone-panel="scurve">
-                <label for="shadowBoost">Shadows</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="shadowBoost"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value="0"
-                  />
-                  <output data-for="shadowBoost"></output>
-                </div>
-              </div>
-
-              <div class="control" data-tone-panel="scurve">
-                <label for="highlightCompress">Highlights</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="highlightCompress"
-                    min="0.5"
-                    max="5"
-                    step="0.05"
-                    value="1.5"
-                  />
-                  <output data-for="highlightCompress"></output>
-                </div>
-              </div>
-
-              <div class="control" data-tone-panel="scurve">
-                <label for="midpoint">Midpoint</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="midpoint"
-                    min="0.3"
-                    max="0.7"
-                    step="0.01"
-                    value="0.5"
-                  />
-                  <output data-for="midpoint"></output>
-                </div>
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend><h3>Range</h3></legend>
-            <div class="control-grid">
-              <div class="control">
-                <label for="dynamicRangeMode">Mode</label>
-                <select id="dynamicRangeMode">
-                  <option value="off">Off</option>
-                  <option value="display">Display</option>
-                  <option value="auto">Auto</option>
-                </select>
-              </div>
-              <div class="control">
-                <label for="dynamicRangeStrength">Strength</label>
-                <div class="range-row">
-                  <input
-                    type="range"
-                    id="dynamicRangeStrength"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value="1"
-                  />
-                  <output data-for="dynamicRangeStrength"></output>
-                </div>
-              </div>
-              <div class="control" data-drc-auto>
-                <label for="lowPercentile">Low %</label>
-                <input
-                  type="number"
-                  id="lowPercentile"
-                  min="0"
-                  max="0.25"
-                  step="0.005"
-                  value="0.01"
-                />
-              </div>
-              <div class="control" data-drc-auto>
-                <label for="highPercentile">High %</label>
-                <input
-                  type="number"
-                  id="highPercentile"
-                  min="0.75"
-                  max="1"
-                  step="0.005"
-                  value="0.99"
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend><h3>Dither</h3></legend>
-            <div class="control-grid">
-              <div class="control">
-                <label for="ditheringType">Type</label>
-                <select id="ditheringType">
-                  <option value="errorDiffusion">Error diffusion</option>
-                  <option value="ordered">Ordered</option>
-                  <option value="random">Random</option>
-                  <option value="quantizationOnly">Quantization only</option>
-                </select>
-              </div>
-
-              <div class="control">
-                <label for="errorDiffusionMatrix">Kernel</label>
-                <select id="errorDiffusionMatrix">
-                  <option value="floydSteinberg">Floyd-Steinberg</option>
-                  <option value="atkinson">Atkinson</option>
-                  <option value="falseFloydSteinberg">
-                    False Floyd-Steinberg
-                  </option>
-                  <option value="jarvis">Jarvis</option>
-                  <option value="stucki">Stucki</option>
-                  <option value="burkes">Burkes</option>
-                  <option value="sierra3">Sierra-3</option>
-                  <option value="sierra2">Sierra-2</option>
-                  <option value="sierra2-4a">Sierra-2-4A</option>
-                </select>
-              </div>
-
-              <label class="check">
-                <input type="checkbox" id="serpentine" checked />
-                Serpentine
-              </label>
-
-              <div class="control">
-                <label for="randomDitheringType">Random</label>
-                <select id="randomDitheringType">
-                  <option value="blackAndWhite">Black and white</option>
-                  <option value="rgb">RGB</option>
-                </select>
-              </div>
-
-              <div class="control">
-                <label for="orderedDitheringMatrixW">Matrix W</label>
-                <input
-                  type="number"
-                  id="orderedDitheringMatrixW"
-                  value="4"
-                  min="1"
-                  max="8"
-                />
-              </div>
-              <div class="control">
-                <label for="orderedDitheringMatrixH">Matrix H</label>
-                <input
-                  type="number"
-                  id="orderedDitheringMatrixH"
-                  value="4"
-                  min="1"
-                  max="8"
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>
-              <div class="config-head">
-                <h3>Config JSON</h3>
-                <button
-                  id="copyConfigButton"
-                  class="icon-button"
-                  type="button"
-                  title="Copy config"
-                  aria-label="Copy config"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M8 8h10v12H8zM6 16H4V4h12v2"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </legend>
-            <pre
-              id="configOutput"
-              class="config-output"
-              aria-label="Current JSON config"
-            ></pre>
-          </fieldset>
-
-          <fieldset>
-            <legend>
-              <div class="config-head">
-                <h3>JS Example</h3>
-                <button
-                  id="copyJsExampleButton"
-                  class="icon-button"
-                  type="button"
-                  title="Copy JavaScript example"
-                  aria-label="Copy JavaScript example"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M8 8h10v12H8zM6 16H4V4h12v2"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </legend>
-            <pre
-              id="jsExampleOutput"
-              class="config-output js"
-              aria-label="Current JavaScript example"
-            ></pre>
-          </fieldset>
         </div>
       </aside>
 
       <section class="workspace" aria-label="Image previews">
         <div class="workspace-tools">
+          <div class="workspace-control">
+            <label for="screenResolutionSelect">Screen</label>
+            <select id="screenResolutionSelect">
+              <option value="spectra6_1_54">
+                1.54 Inch Spectra 6 - 240 x 240
+              </option>
+              <option value="spectra6_1_69">
+                1.69 Inch Round Spectra 6 - 400 x 400
+              </option>
+              <option value="spectra6_3_7">
+                3.7 Inch Spectra 6 - 720 x 480
+              </option>
+              <option value="spectra6_4">
+                4 Inch Spectra 6 - 600 x 400
+              </option>
+              <option value="spectra6_5_9">
+                5.9 Inch Spectra 6 - 960 x 680
+              </option>
+              <option value="spectra6_7_09">
+                7.09 Inch Spectra 6 - 1600 x 1200
+              </option>
+              <option value="openpaper7" selected>
+                7.3 Inch Spectra 6 / OpenPaper 7 - 800 x 480
+              </option>
+              <option value="spectra6_8_14">
+                8.14 Inch Spectra 6 - 1024 x 576
+              </option>
+              <option value="spectra6_10">
+                10 Inch Spectra 6 - 1600 x 1200
+              </option>
+              <option value="openpaperL">
+                13.3 Inch Spectra 6 / OpenPaper L - 1600 x 1200
+              </option>
+              <option value="spectra6_25_3">
+                25.3 Inch Spectra 6 - 3200 x 1800
+              </option>
+              <option value="spectra6_28_5">
+                28.5 Inch Spectra 6 - 3060 x 2160
+              </option>
+              <option value="spectra6_31_5">
+                31.5 Inch Spectra 6 - 2560 x 1440
+              </option>
+            </select>
+          </div>
+          <div class="workspace-control">
+            <span id="orientationControlLabel" class="control-label">
+              Orientation
+            </span>
+            <select
+              id="orientationSelect"
+              class="state-select"
+              aria-hidden="true"
+              tabindex="-1"
+            >
+              <option value="original">Original</option>
+              <option value="landscape">Landscape</option>
+              <option value="portrait">Portrait</option>
+            </select>
+            <div
+              class="segmented-control"
+              role="radiogroup"
+              aria-labelledby="orientationControlLabel"
+            >
+              <button
+                type="button"
+                class="segmented-option"
+                role="radio"
+                aria-checked="false"
+                data-orientation-option="original"
+                title="Original orientation"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="7" y="4" width="10" height="16" rx="2"></rect>
+                  <path d="M9 8h6"></path>
+                  <path d="M10 16h4"></path>
+                  <path d="M18.5 7.5a5 5 0 0 1 0 9"></path>
+                  <path d="M16.5 14.5l2 2 2-2"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="segmented-option"
+                role="radio"
+                aria-checked="false"
+                data-orientation-option="landscape"
+                title="Landscape"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3.5" y="7" width="17" height="10" rx="2"></rect>
+                  <path d="M8 12h8"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="segmented-option"
+                role="radio"
+                aria-checked="false"
+                data-orientation-option="portrait"
+                title="Portrait"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="7" y="3.5" width="10" height="17" rx="2"></rect>
+                  <path d="M12 8v8"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="workspace-control">
+            <span id="imageFitControlLabel" class="control-label">
+              Image fit
+            </span>
+            <select
+              id="imageFitSelect"
+              class="state-select"
+              aria-hidden="true"
+              tabindex="-1"
+            >
+              <option value="contain">Contain</option>
+              <option value="cover" selected>Cover</option>
+            </select>
+            <div
+              class="segmented-control"
+              role="radiogroup"
+              aria-labelledby="imageFitControlLabel"
+            >
+              <button
+                type="button"
+                class="segmented-option"
+                role="radio"
+                aria-checked="false"
+                data-image-fit-option="contain"
+                title="Contain"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                  <rect x="7" y="8" width="10" height="8" rx="1.5"></rect>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="segmented-option"
+                role="radio"
+                aria-checked="false"
+                data-image-fit-option="cover"
+                title="Cover"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                  <path d="M3 9h18"></path>
+                  <path d="M3 15h18"></path>
+                  <path d="M8 5v14"></path>
+                  <path d="M16 5v14"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
           <button
             id="toggleOriginalSizeButton"
             class="button"
@@ -1068,10 +1860,22 @@
           <article class="preview">
             <div class="preview-head">
               <div class="preview-title">
-                <h2>Dithered</h2>
+                <h2>Adjusted</h2>
                 <p class="preview-subtitle">
-                  Emulating how the image will look in the Display
+                  Image adjustments before dithering
                 </p>
+              </div>
+            </div>
+            <div class="canvas-frame" data-scroll-sync>
+              <canvas id="adjustedCanvas"></canvas>
+            </div>
+          </article>
+
+          <article class="preview">
+            <div class="preview-head">
+              <div class="preview-title">
+                <h2>Dithered</h2>
+                <p class="preview-subtitle">How it will look on the display</p>
               </div>
               <a
                 id="downloadLink"
@@ -1101,7 +1905,7 @@
             <div class="preview-head">
               <div class="preview-title">
                 <h2>Device</h2>
-                <p class="preview-subtitle">Actual image send to the display</p>
+                <p class="preview-subtitle">Actual image sent to the display</p>
               </div>
               <a
                 id="downloadDeviceColorsLink"

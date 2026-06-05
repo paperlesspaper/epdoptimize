@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EPDOptimize Rating Tool</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1d2329;
+        --muted: #64707d;
+        --line: #d8dee5;
+        --panel: #f6f8fa;
+        --paper: #ffffff;
+        --accent: #176f6b;
+        --accent-strong: #0d5b57;
+        --focus: #f4c542;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem clamp(1rem, 3vw, 2rem);
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 1rem;
+      }
+
+      a {
+        color: var(--accent-strong);
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+        min-height: calc(100vh - 4rem);
+      }
+
+      aside {
+        display: grid;
+        align-content: start;
+        gap: 1rem;
+        padding: 1rem;
+        border-right: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      fieldset {
+        display: grid;
+        gap: 0.75rem;
+        margin: 0;
+        padding: 0 0 1rem;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      fieldset:last-child {
+        border-bottom: 0;
+      }
+
+      legend {
+        padding: 0 0 0.75rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      label {
+        display: grid;
+        gap: 0.35rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 650;
+      }
+
+      select,
+      input[type="file"]::file-selector-button {
+        width: 100%;
+        min-height: 2.35rem;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--paper);
+        color: var(--ink);
+        font: inherit;
+      }
+
+      select {
+        padding: 0.45rem 0.55rem;
+      }
+
+      input[type="file"] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      input[type="file"]::file-selector-button {
+        width: auto;
+        margin-right: 0.75rem;
+        padding: 0 0.75rem;
+        border-color: transparent;
+        background: var(--accent);
+        color: white;
+        cursor: pointer;
+      }
+
+      button,
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.25rem;
+        padding: 0.4rem 0.75rem;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: var(--accent);
+        color: white;
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 750;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        border-color: var(--line);
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .controls-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+
+      .controls-grid .full {
+        grid-column: 1 / -1;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+
+      .status {
+        color: var(--muted);
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 1rem;
+        padding: 1rem;
+        min-width: 0;
+      }
+
+      .meta-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .pair-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        min-height: 0;
+      }
+
+      .candidate {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 0.75rem;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        padding: 0.75rem;
+      }
+
+      .candidate-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .canvas-frame {
+        display: grid;
+        place-items: center;
+        min-height: 18rem;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background:
+          linear-gradient(45deg, #eff2f5 25%, transparent 25%),
+          linear-gradient(-45deg, #eff2f5 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #eff2f5 75%),
+          linear-gradient(-45deg, transparent 75%, #eff2f5 75%);
+        background-position:
+          0 0,
+          0 8px,
+          8px -8px,
+          -8px 0;
+        background-size: 16px 16px;
+      }
+
+      canvas {
+        display: block;
+        max-width: 100%;
+        max-height: 68vh;
+        object-fit: contain;
+      }
+
+      .vote-row {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      .vote-row button {
+        min-height: 3rem;
+      }
+
+      .small-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .details {
+        color: var(--muted);
+        font-size: 0.8rem;
+        line-height: 1.35;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 980px) {
+        main,
+        .pair-grid {
+          grid-template-columns: 1fr;
+        }
+
+        aside {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+
+      @media (max-width: 620px) {
+        header,
+        .meta-bar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .controls-grid,
+        .actions,
+        .vote-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/epdoptimize/assets/ratingTool-DAV-X_1c.js"></script>
+    <link rel="modulepreload" crossorigin href="/epdoptimize/assets/constants-BuyXdO0e.js">
+  </head>
+  <body>
+    <header>
+      <h1>EPDOptimize Rating Tool</h1>
+      <nav aria-label="Project links">
+        <a href="./index.html">Demo</a>
+      </nav>
+    </header>
+
+    <main>
+      <aside>
+        <fieldset>
+          <legend>Dataset</legend>
+          <label>
+            Comparison
+            <select id="comparisonModeSelect">
+              <option value="legacyLayered" selected>
+                Previous Auto vs layered Auto
+              </option>
+              <option value="autoBaseline">
+                Current Auto vs baseline Auto
+              </option>
+              <option value="autoToneContrast">
+                Auto S-curve vs Auto contrast
+              </option>
+              <option value="autoWhiteGuard">
+                Auto white guard vs unguarded Auto
+              </option>
+              <option value="chromaRgb">
+                Experimental chroma vs RGB matching
+              </option>
+              <option value="hueMixRgb">
+                Hue mix gradient vs RGB diffusion
+              </option>
+              <option value="magentaRgb">
+                Magenta probe vs RGB diffusion
+              </option>
+              <option value="all">All variants</option>
+            </select>
+          </label>
+          <label>
+            Sample mode
+            <select id="sampleModeSelect">
+              <option value="all">All samples</option>
+              <option value="selected">Selected sample</option>
+            </select>
+          </label>
+          <label>
+            Sample
+            <select id="sampleSelect"></select>
+          </label>
+          <label>
+            Upload image
+            <input type="file" id="fileInput" accept="image/*" />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Display</legend>
+          <div class="controls-grid">
+            <label class="full">
+              Palette
+              <select id="paletteSelect">
+                <option value="aitjcize-spectra6" selected>
+                  aitjcize Spectra 6
+                </option>
+                <option value="default">Default</option>
+                <option value="spectra6">Spectra 6</option>
+                <option value="spectra6-original">Spectra 6 Original</option>
+                <option value="spectra6-original-preview">
+                  Spectra 6 Original + preview
+                </option>
+                <option value="spectra6legacy">Spectra 6 Legacy</option>
+                <option value="acep">Gallery</option>
+                <option value="gameboy">Game Boy</option>
+              </select>
+            </label>
+            <label>
+              Screen
+              <select id="screenSelect">
+                <option value="spectra6_1_54">
+                  1.54 Inch Spectra 6 - 240 x 240
+                </option>
+                <option value="spectra6_1_69">
+                  1.69 Inch Round Spectra 6 - 400 x 400
+                </option>
+                <option value="spectra6_3_7">
+                  3.7 Inch Spectra 6 - 720 x 480
+                </option>
+                <option value="spectra6_4">
+                  4 Inch Spectra 6 - 600 x 400
+                </option>
+                <option value="spectra6_5_9">
+                  5.9 Inch Spectra 6 - 960 x 680
+                </option>
+                <option value="spectra6_7_09">
+                  7.09 Inch Spectra 6 - 1600 x 1200
+                </option>
+                <option value="openpaper7" selected>
+                  7.3 Inch Spectra 6 / OpenPaper 7 - 800 x 480
+                </option>
+                <option value="spectra6_8_14">
+                  8.14 Inch Spectra 6 - 1024 x 576
+                </option>
+                <option value="spectra6_10">
+                  10 Inch Spectra 6 - 1600 x 1200
+                </option>
+                <option value="openpaperL">
+                  13.3 Inch Spectra 6 / OpenPaper L - 1600 x 1200
+                </option>
+                <option value="spectra6_25_3">
+                  25.3 Inch Spectra 6 - 3200 x 1800
+                </option>
+                <option value="spectra6_28_5">
+                  28.5 Inch Spectra 6 - 3060 x 2160
+                </option>
+                <option value="spectra6_31_5">
+                  31.5 Inch Spectra 6 - 2560 x 1440
+                </option>
+              </select>
+            </label>
+            <label>
+              Fit
+              <select id="fitSelect">
+                <option value="contain">Contain</option>
+                <option value="cover">Cover</option>
+              </select>
+            </label>
+            <label class="full">
+              Orientation
+              <select id="orientationSelect">
+                <option value="landscape">Landscape</option>
+                <option value="portrait">Portrait</option>
+                <option value="original">Original</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Votes</legend>
+          <p id="statusLine" class="status">Preparing comparison...</p>
+          <div class="actions">
+            <button id="exportButton" type="button">Export JSON</button>
+            <button id="clearButton" class="secondary" type="button">
+              Clear
+            </button>
+          </div>
+        </fieldset>
+      </aside>
+
+      <section class="workspace" aria-label="Pairwise comparison">
+        <div class="meta-bar">
+          <div>
+            <h2 id="imageTitle">Loading</h2>
+            <p id="pairSummary" class="details">Generating variants...</p>
+          </div>
+          <button id="nextButton" class="secondary" type="button">Skip</button>
+        </div>
+
+        <div class="pair-grid">
+          <article class="candidate">
+            <div class="candidate-head">
+              <strong>A</strong>
+              <span id="leftDetails" class="details"></span>
+            </div>
+            <div class="canvas-frame">
+              <canvas id="leftCanvas"></canvas>
+            </div>
+          </article>
+
+          <article class="candidate">
+            <div class="candidate-head">
+              <strong>B</strong>
+              <span id="rightDetails" class="details"></span>
+            </div>
+            <div class="canvas-frame">
+              <canvas id="rightCanvas"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <div class="vote-row">
+          <button id="leftButton" type="button">A is better</button>
+          <div class="small-actions">
+            <button id="tieButton" class="secondary" type="button">Tie</button>
+          </div>
+          <button id="rightButton" type="button">B is better</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
