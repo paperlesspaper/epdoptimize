@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EPDOptimize Fabric Filter Test</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%232f3437'/%3E%3Cpath d='M8 9h16v4H8zm0 6h12v4H8zm0 6h16v3H8z' fill='%23f8f7f2'/%3E%3C/svg%3E"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ecebe6;
+        --panel: #f8f7f2;
+        --panel-strong: #ffffff;
+        --ink: #202124;
+        --muted: #676b73;
+        --line: #cac6bc;
+        --line-strong: #a5a093;
+        --accent: #18705f;
+        --accent-strong: #0f5849;
+        --button: #2f3437;
+        --button-ink: #ffffff;
+        --warn: #8a4b0f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        min-height: 2rem;
+        border: 1px solid var(--line-strong);
+        border-radius: 4px;
+        background: var(--panel-strong);
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: var(--accent);
+      }
+
+      button.primary {
+        background: var(--button);
+        border-color: var(--button);
+        color: var(--button-ink);
+        font-weight: 700;
+      }
+
+      button:disabled,
+      input:disabled,
+      select:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: 18rem minmax(32rem, 1fr) 22rem;
+        min-height: 100vh;
+      }
+
+      aside,
+      .preview-panel {
+        background: var(--panel);
+        border-color: var(--line);
+        min-height: 0;
+        overflow: auto;
+      }
+
+      aside {
+        border-right: 1px solid var(--line);
+      }
+
+      .preview-panel {
+        border-left: 1px solid var(--line);
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-strong);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 0.98rem;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      h3 {
+        font-size: 0.76rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .status {
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.35;
+      }
+
+      .status.warn {
+        color: var(--warn);
+      }
+
+      .panel-section {
+        display: grid;
+        gap: 0.7rem;
+        padding: 0.85rem 1rem 1rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+      }
+
+      .button-row.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .control {
+        display: grid;
+        gap: 0.3rem;
+      }
+
+      .control-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 650;
+      }
+
+      .value {
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+
+      input[type="file"],
+      select {
+        width: 100%;
+        min-height: 2rem;
+      }
+
+      .toggle-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 650;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-width: 0;
+        min-height: 0;
+      }
+
+      .stage-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: #dedbd2;
+      }
+
+      .canvas-wrap {
+        display: grid;
+        place-items: center;
+        min-height: 0;
+        overflow: auto;
+        padding: 1.25rem;
+      }
+
+      .canvas-frame {
+        background:
+          linear-gradient(45deg, #d5d1c6 25%, transparent 25%),
+          linear-gradient(-45deg, #d5d1c6 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #d5d1c6 75%),
+          linear-gradient(-45deg, transparent 75%, #d5d1c6 75%);
+        background-position:
+          0 0,
+          0 10px,
+          10px -10px,
+          -10px 0;
+        background-size: 20px 20px;
+        border: 1px solid var(--line-strong);
+        box-shadow: 0 16px 42px rgba(36, 34, 28, 0.22);
+      }
+
+      canvas {
+        display: block;
+      }
+
+      .preview-grid {
+        display: grid;
+        gap: 0.85rem;
+        padding: 1rem;
+      }
+
+      .preview-card {
+        display: grid;
+        gap: 0.55rem;
+      }
+
+      .preview-card canvas {
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .reasons {
+        display: grid;
+        gap: 0.4rem;
+        padding-left: 1.05rem;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.35;
+      }
+
+      @media (max-width: 1100px) {
+        .app-shell {
+          grid-template-columns: 18rem minmax(0, 1fr);
+        }
+
+        .preview-panel {
+          grid-column: 1 / -1;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+
+        .preview-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app-shell {
+          display: block;
+        }
+
+        body {
+          overflow: auto;
+        }
+
+        .stage-toolbar,
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/epdoptimize/assets/fabricFilter-Dw35y_OE.js"></script>
+    <link rel="modulepreload" crossorigin href="/epdoptimize/assets/src-CFrpgIRj.js">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside>
+        <header>
+          <h1>Fabric EPD Filter</h1>
+          <p id="selectionStatus" class="status">Loading...</p>
+        </header>
+
+        <section class="panel-section">
+          <h2>Objects</h2>
+          <input id="fileInput" type="file" accept="image/*" />
+          <div class="button-row">
+            <button id="addImageButton">Add image</button>
+            <button id="addTextButton">Add text</button>
+          </div>
+          <div class="button-row">
+            <button id="addBlockButton">Add block</button>
+            <button id="deleteButton">Delete</button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>Tone</h2>
+          <label class="toggle-line">
+            Fast WebGL preview
+            <input id="webglTonePreviewInput" type="checkbox" />
+          </label>
+          <label class="toggle-line">
+            Disable debounce
+            <input id="disableDebounceInput" type="checkbox" />
+          </label>
+          <div class="control" data-control="exposure">
+            <div class="control-header">
+              <label for="exposureInput">Exposure</label>
+              <span class="value" id="exposureValue">0.00</span>
+            </div>
+            <input id="exposureInput" type="range" min="-1" max="1" step="0.01" value="0" />
+          </div>
+          <div class="control" data-control="contrast">
+            <div class="control-header">
+              <label for="contrastInput">Contrast</label>
+              <span class="value" id="contrastValue">0.00</span>
+            </div>
+            <input id="contrastInput" type="range" min="-1" max="1" step="0.01" value="0" />
+          </div>
+          <div class="control" data-control="saturation">
+            <div class="control-header">
+              <label for="saturationInput">Saturation</label>
+              <span class="value" id="saturationValue">0.00</span>
+            </div>
+            <input id="saturationInput" type="range" min="-1" max="1" step="0.01" value="0" />
+          </div>
+          <div class="control" data-control="shadows">
+            <div class="control-header">
+              <label for="shadowsInput">Shadows</label>
+              <span class="value" id="shadowsValue">0.00</span>
+            </div>
+            <input id="shadowsInput" type="range" min="-1" max="1" step="0.01" value="0" />
+          </div>
+          <div class="control" data-control="highlights">
+            <div class="control-header">
+              <label for="highlightsInput">Highlights</label>
+              <span class="value" id="highlightsValue">0.00</span>
+            </div>
+            <input id="highlightsInput" type="range" min="-1" max="1" step="0.01" value="0" />
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="toggle-line">
+            <h2>Clarity</h2>
+            <label><input id="clarityEnabledInput" type="checkbox" /> Enabled</label>
+          </div>
+          <div class="control">
+            <div class="control-header">
+              <label for="clarityAmountInput">Amount</label>
+              <span class="value" id="clarityAmountValue">0.00</span>
+            </div>
+            <input id="clarityAmountInput" type="range" min="0" max="1" step="0.01" value="0" />
+          </div>
+          <div class="control">
+            <div class="control-header">
+              <label for="clarityRadiusInput">Radius</label>
+              <span class="value" id="clarityRadiusValue">1.50</span>
+            </div>
+            <input id="clarityRadiusInput" type="range" min="0.5" max="4" step="0.1" value="1.5" />
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="toggle-line">
+            <h2>Dynamic Range</h2>
+            <label><input id="dynamicRangeEnabledInput" type="checkbox" checked /> Enabled</label>
+          </div>
+          <div class="control">
+            <div class="control-header">
+              <label for="dynamicRangeStrengthInput">Strength</label>
+              <span class="value" id="dynamicRangeStrengthValue">1.00</span>
+            </div>
+            <input id="dynamicRangeStrengthInput" type="range" min="0" max="1" step="0.01" value="1" />
+          </div>
+          <div class="button-row">
+            <div class="control">
+              <div class="control-header">
+                <label for="dynamicRangeLowInput">Low</label>
+                <span class="value" id="dynamicRangeLowValue">0.02</span>
+              </div>
+              <input id="dynamicRangeLowInput" type="range" min="0" max="0.1" step="0.005" value="0.02" />
+            </div>
+            <div class="control">
+              <div class="control-header">
+                <label for="dynamicRangeHighInput">High</label>
+                <span class="value" id="dynamicRangeHighValue">0.98</span>
+              </div>
+              <input id="dynamicRangeHighInput" type="range" min="0.9" max="1" step="0.005" value="0.98" />
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="toggle-line">
+            <h2>Levels</h2>
+            <label><input id="levelEnabledInput" type="checkbox" /> Enabled</label>
+          </div>
+          <label class="toggle-line">
+            Auto
+            <input id="levelAutoInput" type="checkbox" checked />
+          </label>
+          <div class="control">
+            <div class="control-header">
+              <label for="levelThresholdInput">Auto threshold</label>
+              <span class="value" id="levelThresholdValue">0.02</span>
+            </div>
+            <input id="levelThresholdInput" type="range" min="0" max="0.1" step="0.005" value="0.02" />
+          </div>
+          <div class="button-row">
+            <div class="control">
+              <div class="control-header">
+                <label for="levelLowInput">Low</label>
+                <span class="value" id="levelLowValue">0.02</span>
+              </div>
+              <input id="levelLowInput" type="range" min="0" max="0.1" step="0.005" value="0.02" />
+            </div>
+            <div class="control">
+              <div class="control-header">
+                <label for="levelHighInput">High</label>
+                <span class="value" id="levelHighValue">0.98</span>
+              </div>
+              <input id="levelHighInput" type="range" min="0.9" max="1" step="0.005" value="0.98" />
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>Actions</h2>
+          <div class="button-row">
+            <button id="autoButton" class="primary">Auto</button>
+            <button id="resetButton">Reset</button>
+          </div>
+          <button id="renderButton" class="primary">Render EPD preview</button>
+          <p id="appStatus" class="status">Select the image and move sliders.</p>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <div class="stage-toolbar">
+          <div>
+            <h2>Editor Canvas</h2>
+            <p class="status">Click the image, text, or block. Drag, resize, and rotate objects.</p>
+          </div>
+          <div class="button-row three">
+            <button id="bringForwardButton">Forward</button>
+            <button id="sendBackButton">Back</button>
+            <button id="centerButton">Center</button>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <div class="canvas-frame">
+            <canvas id="fabricCanvas" width="720" height="500"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="preview-panel">
+        <header>
+          <h1>EPD Preview</h1>
+          <p id="previewStatus" class="status">No preview yet.</p>
+        </header>
+        <div class="preview-grid">
+          <div class="preview-card">
+            <h3>Dithered calibrated colors</h3>
+            <canvas id="ditheredCanvas" width="720" height="500"></canvas>
+          </div>
+          <div class="preview-card">
+            <h3>Device colors</h3>
+            <canvas id="deviceCanvas" width="720" height="500"></canvas>
+          </div>
+          <div class="preview-card">
+            <h3>Auto reasons</h3>
+            <ul id="reasonsList" class="reasons">
+              <li>Run Auto or EPD preview to see recommendations.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
