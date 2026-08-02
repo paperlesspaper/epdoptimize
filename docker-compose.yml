@@ -1,0 +1,9 @@
+services:
+  examples-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        EXAMPLES_BASE_PATH: /
+    ports:
+      - "8080:80"

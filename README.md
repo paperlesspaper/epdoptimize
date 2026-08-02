@@ -77,6 +77,44 @@ Heuristically classify the image, score presets, and suggest dither options for 
 npm install epdoptimize
 ```
 
+## Self-host the examples web app with Docker
+
+This repository includes a Docker setup for the examples web app
+(`examples/index.html`, `examples/fabric-filter.html`, `examples/rating-tool.html`).
+
+Build examples assets locally:
+
+```bash
+npm ci
+npm run build:examples:docker
+```
+
+Run with Docker:
+
+```bash
+docker build -t epdoptimize-examples .
+docker run --rm -p 8080:80 epdoptimize-examples
+```
+
+Then open:
+
+```txt
+http://localhost:8080/
+```
+
+Run with Compose:
+
+```bash
+docker compose up --build
+```
+
+The Docker build defaults to root hosting (`/`). If you need a subpath build,
+set `EXAMPLES_BASE_PATH` at build time:
+
+```bash
+docker build --build-arg EXAMPLES_BASE_PATH=/my-path/ -t epdoptimize-examples .
+```
+
 ## Quick Start
 
 ```html
