@@ -1,0 +1,7 @@
+.git
+.github
+node_modules
+dist
+npm-debug.log*
+examples/rating-data/pairwise-votes.jsonl
+examples/rating-data/pairwise-votes.json
