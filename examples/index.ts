@@ -777,6 +777,7 @@ function updateCanvasSizeMode() {
     "aria-pressed",
     String(showOriginalSize),
   );
+  applyOneToOnePreviewScale();
 
   if (showOriginalSize) {
     syncCanvasFrameScroll(canvasFrames[0] ?? null);
@@ -787,6 +788,32 @@ function updateCanvasSizeMode() {
     frame.scrollTo({ left: 0, top: 0 });
   }
 }
+
+const previewCanvases = [
+  inputCanvas,
+  adjustedCanvas,
+  outputCanvas,
+  deviceColorsCanvas,
+];
+
+/**
+ * Put one canvas pixel on exactly one device pixel while showing original size.
+ *
+ * A CSS pixel is not a device pixel wherever the display is scaled, so leaving
+ * the width to `auto` still resamples by that ratio. A dither is nothing but
+ * near-Nyquist detail, so any resampling beats the mask against the sample grid
+ * into a regular moire -- an artefact of the preview, not of the pixels that the
+ * PNG download contains.
+ */
+function applyOneToOnePreviewScale(canvas?: HTMLCanvasElement) {
+  const ratio = window.devicePixelRatio || 1;
+  for (const target of canvas ? [canvas] : previewCanvases) {
+    target.style.width = showOriginalSize ? `${target.width / ratio}px` : "";
+  }
+}
+
+// Zooming or moving the window to another monitor changes the ratio.
+window.addEventListener("resize", () => applyOneToOnePreviewScale());
 
 function syncCanvasFrameScroll(source: HTMLDivElement | null) {
   if (!showOriginalSize || syncingCanvasScroll || !source) return;
@@ -934,6 +961,7 @@ function drawImageToScreenCanvas(
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
   drawImageWithFit(img, ctx, canvasWidth, canvasHeight, imageFit);
+  applyOneToOnePreviewScale(canvas);
 }
 
 function drawImageWithFit(
@@ -2076,6 +2104,7 @@ function putImageDataOnCanvas(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Unable to draw processed image data.");
   ctx.putImageData(imageData, 0, 0);
+  applyOneToOnePreviewScale(canvas);
 }
 
 function getProcessingWorker() {
