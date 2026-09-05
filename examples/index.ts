@@ -32,6 +32,7 @@ import {
   getSelectedImageFit,
   getSelectedOrientation,
   getSelectedScreenResolution,
+  updateCustomResolution,
   loadDeviceTestConfig,
   saveDeviceTestConfig,
   setDeviceTestStatus,
@@ -106,6 +107,9 @@ import {
   savePaletteButton,
   saturationInput,
   screenResolutionSelect,
+  customWidthInput,
+  customHeightInput,
+  customResolutionFields,
   scurveStrengthInput,
   serpentineCheckbox,
   shadowBoostInput,
@@ -966,8 +970,9 @@ function drawImageToScreenCanvas(
 
   const resolvedOrientation =
     orientation === "original" ? getOriginalImageOrientation(img) : orientation;
-  const canvasWidth = resolvedOrientation === "portrait" ? height : width;
-  const canvasHeight = resolvedOrientation === "portrait" ? width : height;
+  const swapDimensions = screenResolutionSelect.value !== "custom" && resolvedOrientation === "portrait";
+  const canvasWidth = swapDimensions ? height : width;
+  const canvasHeight = swapDimensions ? width : height;
 
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
@@ -2429,6 +2434,14 @@ fileInput.addEventListener("change", async () => {
 });
 
 function refreshControlState() {
+  const custom = screenResolutionSelect.value === "custom";
+  customResolutionFields.hidden = !custom;
+  orientationSelect.disabled = custom;
+  orientationToggleButtons.forEach(button => {
+    button.disabled = custom;
+    const name = button.dataset.orientationOption ?? "";
+    button.title = name === "original" ? "Original orientation" : name.charAt(0).toUpperCase() + name.slice(1);
+  });
   updatePalettePreviews();
   updateCanvasDitherControlAvailability();
   updateConfigOutput();
@@ -2609,9 +2622,20 @@ configTabButtons.forEach((button) => {
   });
 });
 
+[customWidthInput, customHeightInput].forEach(input => {
+  input.addEventListener("input", () => {
+    if (!updateCustomResolution()) return;
+    saveDeviceTestConfig();
+    setDeviceTestStatus("");
+    autoControlsDirty = false;
+    scheduleProcessImage();
+  });
+});
+
 [screenResolutionSelect, orientationSelect, imageFitSelect].forEach(
   (select) => {
     select.addEventListener("change", () => {
+      if (screenResolutionSelect.value === "custom") updateCustomResolution();
       syncWorkspaceToggleControls();
       saveDeviceTestConfig();
       setDeviceTestStatus("");

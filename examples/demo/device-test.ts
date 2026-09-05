@@ -1,9 +1,13 @@
+import { parseCustomResolution } from "./custom-resolution";
 import {
   DEFAULT_DEVICE_TEST_CONFIG,
   DEVICE_TEST_STORAGE_KEY,
   SCREEN_RESOLUTIONS,
 } from "./constants";
 import {
+  customWidthInput,
+  customHeightInput,
+  customResolutionStatus,
   apiKeyInput,
   deviceColorsCanvas,
   deviceTestStatus,
@@ -16,9 +20,29 @@ import {
 } from "./elements";
 import type { ImageFitMode, ScreenOrientation } from "./types";
 
+let customResolution = parseCustomResolution(800, 480);
+
+export function updateCustomResolution() {
+  try {
+    const next = parseCustomResolution(customWidthInput.value, customHeightInput.value);
+    customResolution = next;
+    customResolutionStatus.textContent = "Width and height set the exact output size.";
+    customWidthInput.removeAttribute("aria-invalid");
+    customHeightInput.removeAttribute("aria-invalid");
+    return true;
+  } catch (error) {
+    customResolutionStatus.textContent = (error as Error).message;
+    customWidthInput.setAttribute("aria-invalid", "true");
+    customHeightInput.setAttribute("aria-invalid", "true");
+    return false;
+  }
+}
+
 export function getDeviceTestConfig() {
   return {
     screenResolution: screenResolutionSelect.value,
+    customWidth: customResolution.width,
+    customHeight: customResolution.height,
     orientation: getSelectedOrientation(),
     imageFit: getSelectedImageFit(),
     paperId: paperIdInput.value.trim(),
@@ -27,6 +51,7 @@ export function getDeviceTestConfig() {
 }
 
 export function getSelectedScreenResolution() {
+  if (screenResolutionSelect.value === "custom") return customResolution;
   return (
     SCREEN_RESOLUTIONS[
       screenResolutionSelect.value as keyof typeof SCREEN_RESOLUTIONS
@@ -63,9 +88,13 @@ export function loadDeviceTestConfig() {
     const saved = JSON.parse(
       localStorage.getItem(DEVICE_TEST_STORAGE_KEY) || "{}",
     );
+    try { customResolution = parseCustomResolution(saved.customWidth, saved.customHeight); }
+    catch { customResolution = parseCustomResolution(800, 480); }
+    customWidthInput.value = String(customResolution.width);
+    customHeightInput.value = String(customResolution.height);
     screenResolutionSelect.value =
       typeof saved.screenResolution === "string" &&
-      saved.screenResolution in SCREEN_RESOLUTIONS
+      (saved.screenResolution === "custom" || Object.prototype.hasOwnProperty.call(SCREEN_RESOLUTIONS, saved.screenResolution))
         ? saved.screenResolution
         : DEFAULT_DEVICE_TEST_CONFIG.screenResolution;
     orientationSelect.value =

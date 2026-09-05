@@ -873,3 +873,9 @@ Contributions and feedback are welcome :)
 ### Reopen a demo configuration
 
 In the demo, open **Config JSON → Import config** and paste an exported configuration, then click **Apply JSON**, or select a `.json` file. The palette and controls are restored in manual mode so automatic recommendations do not overwrite them. Options without a dedicated control (such as paper normalization and white preservation) are retained during fine-tuning and when copying the config again. Invalid configurations show an error without changing the current settings. To return to automatic processing, select the Auto preset.
+
+### Custom displays and palettes
+
+In the demo, choose **Screen → Custom resolution** and enter the exact output width and height in pixels. These dimensions are remembered in this browser; orientation is determined by the entered dimensions. Each dimension must be 1–8192 pixels, with at most 16 megapixels in total. Invalid input leaves the last valid output size in use.
+
+The palette selector includes generic black/white/red and black/white/yellow three-color palettes and a black/white/red/yellow four-color palette. They are also exported as `genericThreeColorRedPalette`, `genericThreeColorYellowPalette`, and `genericFourColorEinkPalette`. Their ideal RGB colors are starting points, not measured display calibrations. Use **Customize palette** to adjust display and device colors, add/remove colors, and save your own palette.
