@@ -639,7 +639,8 @@ import {
   defaultPalette,
   genericTwoColorEinkPalette,
   genericFourGrayscalePalette,
-  trmnlSeeed16GrayscalePalette,
+  genericSixteenGrayscalePalette,
+  trmnlSeeed16GrayscalePalette, // Backwards-compatible alias
   gameboyPalette,
   spectra6legacyPalette,
   spectra6Palette,
@@ -879,3 +880,23 @@ In the demo, open **Config JSON → Import config** and paste an exported config
 In the demo, choose **Screen → Custom resolution** and enter the exact output width and height in pixels. These dimensions are remembered in this browser; orientation is determined by the entered dimensions. Each dimension must be 1–8192 pixels, with at most 16 megapixels in total. Invalid input leaves the last valid output size in use.
 
 The palette selector includes generic black/white/red and black/white/yellow three-color palettes and a black/white/red/yellow four-color palette. They are also exported as `genericThreeColorRedPalette`, `genericThreeColorYellowPalette`, and `genericFourColorEinkPalette`. Their ideal RGB colors are starting points, not measured display calibrations. Use **Customize palette** to adjust display and device colors, add/remove colors, and save your own palette.
+
+### 16-level grayscale displays
+
+For **TRMNL X** or **Seeed reTerminal E1003**, select the corresponding 10.3-inch screen in the demo. This selects the 16-level grayscale palette and a 1872 × 1404 canvas; use Portrait for 1404 × 1872 output. The manufacturers specify 16 grayscale levels at this resolution: [TRMNL X](https://shop.trmnl.com/products/trmnl-x) and [Seeed E1003](https://wiki.seeedstudio.com/getting_started_with_reterminal_e1003/). Other displays can use Custom resolution with the same palette.
+
+```js
+import { ditherCanvas, genericSixteenGrayscalePalette } from "epdoptimize";
+
+// Prepare sourceCanvas at the desired output resolution first.
+await ditherCanvas(sourceCanvas, outputCanvas, {
+  palette: genericSixteenGrayscalePalette,
+  ditheringType: "errorDiffusion",
+  errorDiffusionMatrix: "floydSteinberg",
+  serpentine: true,
+});
+```
+
+The palette contains 16 neutral levels from `#000000` to `#FFFFFF` in steps of `#111111`. `trmnlSeeed16GrayscalePalette` remains available with the same values. These are generic device codes, not measured screen reflectance values. For a calibrated preview, customize each entry's `color` while keeping its corresponding `deviceColor` code. Thanks to [@GuySie](https://github.com/GuySie) for the request and reference photographs in [issue #17](https://github.com/paperlesspaper/epdoptimize/issues/17).
+
+The canvas/PNG output contains 16 possible RGB gray values; it is not a packed 4-bit framebuffer. The receiving firmware must support 16-gray mode and map these codes to its native format. For example, Seeed documents `epaper.initGrayMode(GRAY_LEVEL16)` in its [Arduino guide](https://wiki.seeedstudio.com/reterminal_e10xx_with_arduino/).

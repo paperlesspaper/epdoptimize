@@ -772,6 +772,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   renderPaletteEditor();
   populateProcessingPresetOptions();
   loadDeviceTestConfig();
+  const screenPalette = screenResolutionSelect.selectedOptions[0]?.dataset.palette;
+  if (screenPalette) paletteSelect.value = screenPalette;
   syncWorkspaceToggleControls();
   applyPresetToUI(processingPresetSelect.value);
   updateCanvasSizeMode();
@@ -2635,6 +2637,14 @@ configTabButtons.forEach((button) => {
 [screenResolutionSelect, orientationSelect, imageFitSelect].forEach(
   (select) => {
     select.addEventListener("change", () => {
+      if (select === screenResolutionSelect) {
+        const suggestedPalette = screenResolutionSelect.selectedOptions[0]?.dataset.palette;
+        if (suggestedPalette) {
+          paletteSelect.value = suggestedPalette;
+          draftPaletteKey = null;
+          renderPaletteEditor();
+        }
+      }
       if (screenResolutionSelect.value === "custom") updateCustomResolution();
       syncWorkspaceToggleControls();
       saveDeviceTestConfig();

@@ -106,3 +106,42 @@ test('two-, three- and sixteen-colour blue noise keeps output in its palette', a
     for(let i=0;i<data.length;i+=4)assert.ok(allowed.has([...data.slice(i,i+3)].map(x=>x.toString(16).padStart(2,'0')).join('')));
   }
 });
+
+test('16-gray public exports preserve all exact levels with Floyd-Steinberg', async () => {
+  const input = new Uint8ClampedArray(32 * 32 * 4);
+  for (let i = 0; i < input.length; i += 4) {
+    const gray = ((i / 4) % 16) * 17;
+    input.set([gray, gray, gray, 255], i);
+  }
+  for (const lib of [esm, cjs]) {
+    assert.deepEqual(lib.genericSixteenGrayscalePalette, lib.trmnlSeeed16GrayscalePalette);
+    assert.deepEqual(lib.genericSixteenGrayscalePalette.map(p => p.color),
+      Array.from({length:16}, (_, i) => '#' + (i * 17).toString(16).padStart(2, '0').repeat(3).toUpperCase()));
+    const result = await dither(lib, 'errorDiffusion', lib.genericSixteenGrayscalePalette, input);
+    assert.deepEqual(result, input);
+    const source = canvas(result, 32, 32), target = canvas(input, 32, 32);
+    lib.replaceColors(source, target, lib.genericSixteenGrayscalePalette);
+    assert.deepEqual(target.data, input);
+  }
+});
+
+test('gray ramps retain 16-level output with Bayer and blue-noise fallbacks', async () => {
+  esm.setBlueNoiseSource(png);
+  const input = new Uint8ClampedArray(32 * 32 * 4);
+  for (let i = 0; i < input.length; i += 4) {
+    const gray = (i / 4) % 256;
+    input.set([gray, gray, gray, 255], i);
+  }
+  for (const mode of ['errorDiffusion', 'ordered', 'ditherItOrdered', 'blueNoise', 'ditherItBlueNoise']) {
+    const output = await dither(esm, mode, esm.genericSixteenGrayscalePalette, input);
+    const shades = new Set();
+    for (let i = 0; i < output.length; i += 4) {
+      assert.equal(output[i], output[i + 1]);
+      assert.equal(output[i], output[i + 2]);
+      assert.equal(output[i] % 17, 0);
+      assert.equal(output[i + 3], 255);
+      shades.add(output[i]);
+    }
+    assert.equal(shades.size, 16, mode);
+  }
+});
