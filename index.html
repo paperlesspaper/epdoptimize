@@ -1094,6 +1094,9 @@
           padding: 0.55rem;
         }
       }
+      #customResolutionFields[hidden] { display: none; }
+      #customResolutionFields input { width: 90px; }
+      #customResolutionStatus { font-size: 12px; max-width: 250px; }
       .config-import { margin: 12px 0; }
       .config-import summary { cursor: pointer; margin-bottom: 12px; }
       .config-import label { display: block; margin: 12px 0 6px; }
@@ -1110,9 +1113,9 @@
       }
       #configImportStatus { font-size: 12px; overflow-wrap: anywhere; }
     </style>
-    <script type="module" crossorigin src="/epdoptimize/assets/demo-B7yr3Yvt.js"></script>
-    <link rel="modulepreload" crossorigin href="/epdoptimize/assets/src-BoQ_sT-O.js">
-    <link rel="modulepreload" crossorigin href="/epdoptimize/assets/constants-B4eU6PDK.js">
+    <script type="module" crossorigin src="/epdoptimize/assets/demo-C64le3_s.js"></script>
+    <link rel="modulepreload" crossorigin href="/epdoptimize/assets/src-KPIiAppr.js">
+    <link rel="modulepreload" crossorigin href="/epdoptimize/assets/constants-Cpeel8MY.js">
   </head>
   <body>
     <header>
@@ -1845,6 +1848,7 @@
           <div class="workspace-control">
             <label for="screenResolutionSelect">Screen</label>
             <select id="screenResolutionSelect">
+              <option value="custom">Custom resolution</option>
               <option value="spectra6_1_54">
                 1.54 Inch Spectra 6 - 240 x 240
               </option>
@@ -1883,6 +1887,13 @@
                 31.5 Inch Spectra 6 - 2560 x 1440
               </option>
             </select>
+          </div>
+          <div id="customResolutionFields" class="workspace-control" hidden>
+            <label for="customWidth">Width (px)</label>
+            <input id="customWidth" type="number" min="1" max="8192" step="1" value="800" aria-describedby="customResolutionStatus" />
+            <label for="customHeight">Height (px)</label>
+            <input id="customHeight" type="number" min="1" max="8192" step="1" value="480" aria-describedby="customResolutionStatus" />
+            <span id="customResolutionStatus" role="status" aria-live="polite"></span>
           </div>
           <div class="workspace-control">
             <span id="orientationControlLabel" class="control-label">
