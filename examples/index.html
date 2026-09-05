@@ -1095,6 +1095,21 @@
           padding: 0.55rem;
         }
       }
+      .config-import { margin: 12px 0; }
+      .config-import summary { cursor: pointer; margin-bottom: 12px; }
+      .config-import label { display: block; margin: 12px 0 6px; }
+      .config-import textarea {
+        box-sizing: border-box;
+        width: 100%;
+        resize: vertical;
+        font: 12px/1.5 monospace;
+        color: inherit;
+        background: transparent;
+        border: 1px solid #666;
+        border-radius: 6px;
+        padding: 8px;
+      }
+      #configImportStatus { font-size: 12px; overflow-wrap: anywhere; }
     </style>
   </head>
   <body>
@@ -1697,6 +1712,15 @@
                   </svg>
                 </button>
               </div>
+              <details class="config-import">
+                <summary>Import config</summary>
+                <label for="configImportText">Paste a previously exported JSON config</label>
+                <textarea id="configImportText" rows="8" spellcheck="false" placeholder='{"palette": "aitjcizeSpectra6Palette", "imageAdjustmentOptions": {}, "canvasDitherOptions": {}}'></textarea>
+                <button id="applyConfigButton" type="button">Apply JSON</button>
+                <label for="configImportFile">Or load a JSON file</label>
+                <input id="configImportFile" type="file" accept=".json,application/json" />
+                <p id="configImportStatus" role="status" aria-live="polite"></p>
+              </details>
               <pre
                 id="configOutput"
                 class="config-output"

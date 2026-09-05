@@ -1,3 +1,4 @@
+import { parseDemoConfig, mergeControlChanges } from "./demo/config-import";
 import { buildCoverageSolver } from "../src/utils/coverage";
 import { hexToRgb } from "../src/dither/functions/color-helpers";
 import {
@@ -158,6 +159,11 @@ let layeredAutoSuggestion: ProcessingSuggestion | null = null;
 let layeredImageAdjustmentSuggestion: AutoImageAdjustmentSuggestion | null = null;
 let layeredCanvasDitherSuggestion: AutoCanvasDitherSuggestion | null = null;
 let autoControlsDirty = false;
+let importedConfig: DemoConfig | null = null;
+let importedControlBaseline: { image: Record<string, unknown>; canvas: Record<string, unknown> } | null = null;
+const configImportText = document.getElementById("configImportText") as HTMLTextAreaElement;
+const configImportStatus = document.getElementById("configImportStatus")!;
+const configImportFile = document.getElementById("configImportFile") as HTMLInputElement;
 let workerRequestId = 0;
 let processingWorker: Worker | null = null;
 let cancelProcessingWorkerRequest: (() => void) | null = null;
@@ -913,6 +919,11 @@ function populateProcessingPresetOptions() {
   autoDitherOption.textContent = "Auto canvas dither (manual image adjustments)";
   processingPresetSelect.append(autoDitherOption);
 
+  const manualOption = document.createElement("option");
+  manualOption.value = "manual";
+  manualOption.textContent = "Manual / imported config";
+  processingPresetSelect.append(manualOption);
+
   for (const preset of getProcessingPresetOptions()) {
     const option = document.createElement("option");
     option.value = preset.value;
@@ -1204,7 +1215,9 @@ function applyAutoAdjustmentsToUI(options: Partial<DitherImageOptions>) {
   const dynamicRangeCompression =
     typeof options.dynamicRangeCompression === "object"
       ? options.dynamicRangeCompression
-      : preset?.dynamicRangeCompression;
+      : options.dynamicRangeCompression === true
+        ? { mode: "display" as const }
+        : preset?.dynamicRangeCompression;
 
   setResolvedInputValue(
     exposureInput,
@@ -1700,6 +1713,10 @@ function getCompactImageAdjustmentOptions(
 }
 
 function getConfigImageAdjustmentOptionsFromUI() {
+  if (importedConfig && importedControlBaseline) {
+    return mergeControlChanges(importedConfig.imageAdjustmentOptions,
+      importedControlBaseline.image, getImageAdjustmentOptionsFromUI());
+  }
   if (isFullAutoPreset() && !autoControlsDirty) {
     return getCompactImageAdjustmentOptions(
       getSelectedAutoImageAdjustmentOptions(),
@@ -1710,6 +1727,10 @@ function getConfigImageAdjustmentOptionsFromUI() {
 }
 
 function getConfigCanvasDitherOptionsFromUI() {
+  if (importedConfig && importedControlBaseline) {
+    return mergeControlChanges(importedConfig.canvasDitherOptions,
+      importedControlBaseline.canvas, getImportCanvasControls());
+  }
   if (isFullAutoPreset()) {
     if (autoControlsDirty) {
       const { palette: _palette, calibrate: _calibrate, ...options } =
@@ -1798,6 +1819,9 @@ function getCompactDitherOptions(options: Partial<DitherImageOptions>) {
     configOptions.errorDiffusionMatrix = options.errorDiffusionMatrix;
   }
 
+  if (options.edgePreservation) configOptions.edgePreservation = options.edgePreservation;
+  if (options.edgeAntialiasing) configOptions.edgeAntialiasing = options.edgeAntialiasing;
+
   if (options.toneMapping) {
     configOptions.toneMapping = options.toneMapping;
   }
@@ -1820,6 +1844,67 @@ function getCompactDitherOptions(options: Partial<DitherImageOptions>) {
 
   return configOptions;
 }
+
+function getImportCanvasControls() {
+  const { palette, calibrate, ...options } = getCanvasDitherOptionsFromUI(getSelectedPaletteOption().palette);
+  return { ...options, edgePreservation: getEdgePreservationFromUI(), edgeAntialiasing: getEdgeAntialiasingFromUI() };
+}
+
+function importConfig(text: string) {
+  // Validate completely before changing any controls or palette records.
+  const choices = Object.fromEntries([
+    ["ditheringType", ditheringTypeSelect], ["errorDiffusionMatrix", errorDiffusionMatrixSelect],
+    ["randomDitheringType", randomDitheringTypeSelect], ["colorMatching", colorMatchingSelect],
+    ["processingEngine", processingEngineSelect],
+  ].map(([name, select]) => [name, Array.from((select as HTMLSelectElement).options).map(option => option.value)]));
+  choices.palette = Object.values(PALETTE_OPTIONS).map(option => option.exportName);
+  choices.processingPreset = getProcessingPresetOptions().map(preset => preset.value);
+  const config = parseDemoConfig(text, choices);
+  let paletteKey = "imported-config";
+  if (typeof config.palette === "string") {
+    paletteKey = Object.keys(PALETTE_OPTIONS).find(key => PALETTE_OPTIONS[key].exportName === config.palette)!;
+    // Resolve the exported built-in palette, even if the user has a saved override.
+    paletteOptions[paletteKey] = { ...PALETTE_OPTIONS[paletteKey], palette: clonePalette(PALETTE_OPTIONS[paletteKey].palette), builtIn: true, modified: false };
+    const option = Array.from(paletteSelect.options).find(option => option.value === paletteKey)!;
+    option.textContent = paletteOptions[paletteKey].label;
+  } else {
+    paletteOptions[paletteKey] = { label: "Imported config", exportName: "", palette: clonePalette(config.palette), builtIn: false, modified: true };
+    if (!Array.from(paletteSelect.options).some(option => option.value === paletteKey)) {
+      paletteSelect.add(new Option("Imported config", paletteKey));
+    }
+  }
+  paletteSelect.value = paletteKey;
+  processingPresetSelect.value = "manual";
+  autoControlsDirty = true;
+  applyAutoDitherAndMatchingToUI(config.canvasDitherOptions);
+  applyAutoAdjustmentsToUI(config.imageAdjustmentOptions);
+  importedConfig = config;
+  importedControlBaseline = { image: getImageAdjustmentOptionsFromUI(), canvas: getImportCanvasControls() };
+  draftPaletteKey = null;
+  renderPaletteEditor();
+  refreshControlState();
+  scheduleProcessImage();
+  configImportStatus.textContent = "Config imported. You can now fine-tune the settings.";
+}
+
+function tryImportConfig(text: string) {
+  try { importConfig(text); }
+  catch (error) { configImportStatus.textContent = error instanceof Error ? error.message : "Could not import config."; }
+}
+
+document.getElementById("applyConfigButton")!.addEventListener("click", () => tryImportConfig(configImportText.value));
+configImportFile.addEventListener("change", async () => {
+  const file = configImportFile.files?.[0];
+  if (!file) return;
+  try {
+    if (file.size > 1_000_000) throw new Error("Config is too large (maximum 1 MB).");
+    const text = await file.text();
+    configImportText.value = text;
+    tryImportConfig(text);
+  } catch (error) {
+    configImportStatus.textContent = error instanceof Error ? error.message : "Could not read file.";
+  } finally { configImportFile.value = ""; }
+});
 
 function getDemoConfig(): DemoConfig {
   const selectedPalette = getSelectedPaletteOption();
@@ -2171,9 +2256,10 @@ function setupCanvasDownloads() {
 async function renderProcessedCanvases(
   palette: PaletteColorEntry[],
   options: DitherImageOptions,
+  adjustmentOptions: DitherImageOptions = options,
 ) {
   if (!canUseProcessingWorker()) {
-    await applyImageAdjustments(inputCanvas, adjustedCanvas, options);
+    await applyImageAdjustments(inputCanvas, adjustedCanvas, adjustmentOptions);
     await ditherCanvas(adjustedCanvas, outputCanvas, options);
     replaceColors(outputCanvas, deviceColorsCanvas, palette);
     return;
@@ -2262,6 +2348,7 @@ async function renderProcessedCanvases(
         id,
         imageData,
         options,
+        adjustmentOptions,
         palette,
       },
       [imageData.data.buffer],
@@ -2311,7 +2398,10 @@ async function processImage() {
       : getDitherOptionsFromUI(palette);
 
   try {
-    await renderProcessedCanvases(palette, options);
+    await renderProcessedCanvases(palette,
+      importedConfig ? { ...getConfigCanvasDitherOptionsFromUI(), palette } : options,
+      importedConfig ? { ...getConfigImageAdjustmentOptionsFromUI(), palette } : options,
+    );
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") return;
     throw error;
@@ -2430,6 +2520,9 @@ controls.forEach((el) => {
     }
 
     if (el === processingPresetSelect) {
+      importedConfig = null;
+      importedControlBaseline = null;
+      configImportStatus.textContent = "";
       autoControlsDirty = false;
       applyPresetToUI(processingPresetSelect.value);
     }
@@ -2466,13 +2559,22 @@ autoAdjustmentsButton.addEventListener("click", () => {
   const suggestion = getSelectedAutoSuggestion();
   if (!suggestion) return;
 
-  applyAutoAdjustmentsToUI(getSelectedAutoImageAdjustmentOptions());
+  const adjustments = getSelectedAutoImageAdjustmentOptions();
+  applyAutoAdjustmentsToUI(adjustments);
+  if (importedConfig && importedControlBaseline) {
+    importedConfig.imageAdjustmentOptions = { ...adjustments };
+    importedControlBaseline.image = getImageAdjustmentOptionsFromUI();
+  }
   refreshControlState();
   scheduleProcessImage();
 });
 
 resetImageAdjustmentsButton.addEventListener("click", () => {
   applyManualAdjustmentDefaultsToUI();
+  if (importedConfig && importedControlBaseline) {
+    importedConfig.imageAdjustmentOptions = {};
+    importedControlBaseline.image = getImageAdjustmentOptionsFromUI();
+  }
   if (isFullAutoPreset()) {
     autoControlsDirty = true;
   }

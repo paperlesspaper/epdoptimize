@@ -5,6 +5,7 @@ interface ProcessRequest {
   id: number;
   imageData: ImageData;
   options: DitherImageOptions;
+  adjustmentOptions?: DitherImageOptions;
   palette: PaletteColorEntry[];
 }
 
@@ -59,7 +60,7 @@ const createMemoryCanvas = (imageData: ImageData): MemoryCanvas => {
 };
 
 self.addEventListener("message", async (event: MessageEvent<ProcessRequest>) => {
-  const { id, imageData, options, palette } = event.data;
+  const { id, imageData, options, adjustmentOptions = options, palette } = event.data;
 
   try {
     const sourceCanvas = createMemoryCanvas(imageData);
@@ -68,7 +69,7 @@ self.addEventListener("message", async (event: MessageEvent<ProcessRequest>) => 
     const deviceCanvas = createMemoryCanvas(cloneImageData(imageData));
 
     await applyImageAdjustments(sourceCanvas, adjustedCanvas, {
-      ...options,
+      ...adjustmentOptions,
       palette,
     });
     await ditherCanvas(adjustedCanvas, ditheredCanvas, {

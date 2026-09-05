@@ -869,3 +869,7 @@ and demo TypeScript checks.
 ---
 
 Contributions and feedback are welcome :)
+
+### Reopen a demo configuration
+
+In the demo, open **Config JSON → Import config** and paste an exported configuration, then click **Apply JSON**, or select a `.json` file. The palette and controls are restored in manual mode so automatic recommendations do not overwrite them. Options without a dedicated control (such as paper normalization and white preservation) are retained during fine-tuning and when copying the config again. Invalid configurations show an error without changing the current settings. To return to automatic processing, select the Auto preset.
