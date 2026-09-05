@@ -45,6 +45,10 @@ export const configPanels = Array.from(
 export const screenResolutionSelect = $(
   "screenResolutionSelect",
 ) as HTMLSelectElement;
+export const customResolutionFields = $("customResolutionFields");
+export const customWidthInput = $("customWidth") as HTMLInputElement;
+export const customHeightInput = $("customHeight") as HTMLInputElement;
+export const customResolutionStatus = $("customResolutionStatus");
 export const orientationSelect = $("orientationSelect") as HTMLSelectElement;
 export const imageFitSelect = $("imageFitSelect") as HTMLSelectElement;
 export const orientationToggleButtons = Array.from(

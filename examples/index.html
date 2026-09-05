@@ -1095,6 +1095,9 @@
           padding: 0.55rem;
         }
       }
+      #customResolutionFields[hidden] { display: none; }
+      #customResolutionFields input { width: 90px; }
+      #customResolutionStatus { font-size: 12px; max-width: 250px; }
       .config-import { margin: 12px 0; }
       .config-import summary { cursor: pointer; margin-bottom: 12px; }
       .config-import label { display: block; margin: 12px 0 6px; }
@@ -1843,6 +1846,7 @@
           <div class="workspace-control">
             <label for="screenResolutionSelect">Screen</label>
             <select id="screenResolutionSelect">
+              <option value="custom">Custom resolution</option>
               <option value="spectra6_1_54">
                 1.54 Inch Spectra 6 - 240 x 240
               </option>
@@ -1881,6 +1885,13 @@
                 31.5 Inch Spectra 6 - 2560 x 1440
               </option>
             </select>
+          </div>
+          <div id="customResolutionFields" class="workspace-control" hidden>
+            <label for="customWidth">Width (px)</label>
+            <input id="customWidth" type="number" min="1" max="8192" step="1" value="800" aria-describedby="customResolutionStatus" />
+            <label for="customHeight">Height (px)</label>
+            <input id="customHeight" type="number" min="1" max="8192" step="1" value="480" aria-describedby="customResolutionStatus" />
+            <span id="customResolutionStatus" role="status" aria-live="polite"></span>
           </div>
           <div class="workspace-control">
             <span id="orientationControlLabel" class="control-label">

@@ -1,4 +1,20 @@
 {
+  "generic-3-color-red": [
+    { "name": "black", "color": "#000000", "deviceColor": "#000000" },
+    { "name": "white", "color": "#FFFFFF", "deviceColor": "#FFFFFF" },
+    { "name": "red", "color": "#FF0000", "deviceColor": "#FF0000" }
+  ],
+  "generic-3-color-yellow": [
+    { "name": "black", "color": "#000000", "deviceColor": "#000000" },
+    { "name": "white", "color": "#FFFFFF", "deviceColor": "#FFFFFF" },
+    { "name": "yellow", "color": "#FFFF00", "deviceColor": "#FFFF00" }
+  ],
+  "generic-4-color-eink": [
+    { "name": "black", "color": "#000000", "deviceColor": "#000000" },
+    { "name": "white", "color": "#FFFFFF", "deviceColor": "#FFFFFF" },
+    { "name": "red", "color": "#FF0000", "deviceColor": "#FF0000" },
+    { "name": "yellow", "color": "#FFFF00", "deviceColor": "#FFFF00" }
+  ],
   "default": [
     { "name": "black", "color": "#000", "deviceColor": "#212121" },
     { "name": "white", "color": "#fff", "deviceColor": "#e6e6e6" }
