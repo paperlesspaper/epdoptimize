@@ -1,3 +1,5 @@
+import { buildCoverageSolver } from "../src/utils/coverage";
+import { hexToRgb } from "../src/dither/functions/color-helpers";
 import {
   applyImageAdjustments,
   ditherCanvas,
@@ -1373,6 +1375,15 @@ function updateCanvasDitherControlAvailability() {
   const usesWasmEngine = ditheringType === "errorDiffusion";
   const canUseWasmEngine =
     usesWasmEngine && colorMatchingSelect.value === "rgb";
+
+  const usesCoverage =
+    (usesOrderedMatrix || ditheringType === "blueNoise" || ditheringType === "ditherItBlueNoise") &&
+    buildCoverageSolver(getSelectedPaletteOption().palette.map(entry => hexToRgb(entry.color))) !== null;
+  setFormControlEnabled(
+    colorMatchingSelect,
+    !usesCoverage || edgePreservationCheckbox.checked || edgeAntialiasingCheckbox.checked,
+    "This mode mixes colors in linear RGB. Matching only affects optional edge cleanup.",
+  );
 
   setFormControlEnabled(
     errorDiffusionMatrixSelect,

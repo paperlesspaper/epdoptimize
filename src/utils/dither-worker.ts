@@ -299,7 +299,15 @@ interface DitherMessage {
   colorSpace?: ColorSpace
 }
 
-self.onmessage = async function (e: MessageEvent<DitherMessage>) {
+self.onmessage = function (e: MessageEvent<DitherMessage>) {
+  // Async rejections do not produce the worker error event consumers await.
+  // Convert a failed mask load into an uncaught error on the worker event loop.
+  void processMessage(e).catch(error => {
+    setTimeout(() => { throw error; }, 0)
+  })
+}
+
+async function processMessage(e: MessageEvent<DitherMessage>) {
   const { mode, pixels, width, height, palette, bayerSize, colorSpace } = e.data
   const data = new Uint8ClampedArray(pixels)
   const indexedPalette = palette.map((color: number[], id: number) => [id, ...color])

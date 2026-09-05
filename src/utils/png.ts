@@ -91,6 +91,7 @@ export async function decodeGreyscalePng(bytes: Uint8Array): Promise<GreyscaleIm
   let height = 0;
   let depth = 0;
   const parts: Uint8Array[] = [];
+  let ended = false;
 
   let at = SIGNATURE.length;
   while (at + 8 <= bytes.length) {
@@ -99,12 +100,20 @@ export async function decodeGreyscalePng(bytes: Uint8Array): Promise<GreyscaleIm
       bytes[at + 4], bytes[at + 5], bytes[at + 6], bytes[at + 7]
     );
     const body = at + 8;
+    if (length > bytes.length - body - 4) throw new Error("blue noise: truncated PNG chunk");
     if (type === "IHDR") {
+      if (length !== 13 || width || at !== SIGNATURE.length) throw new Error("blue noise: invalid PNG header");
       width = view.getUint32(body);
       height = view.getUint32(body + 4);
       depth = bytes[body + 8];
       const colourType = bytes[body + 9];
       const interlace = bytes[body + 12];
+      if (!width || !height || width * height > 16_777_216) {
+        throw new Error("blue noise: invalid or oversized mask dimensions");
+      }
+      if (bytes[body + 10] !== 0 || bytes[body + 11] !== 0) {
+        throw new Error("blue noise: unsupported PNG compression or filter method");
+      }
       if (colourType !== 0) {
         throw new Error(`blue noise: expected a greyscale PNG, got colour type ${colourType}`);
       }
@@ -113,14 +122,18 @@ export async function decodeGreyscalePng(bytes: Uint8Array): Promise<GreyscaleIm
         throw new Error(`blue noise: expected 8 or 16 bits per sample, got ${depth}`);
       }
     } else if (type === "IDAT") {
+      if (!width) throw new Error("blue noise: PNG data precedes header");
       parts.push(bytes.subarray(body, body + length));
     } else if (type === "IEND") {
+      if (length !== 0) throw new Error("blue noise: invalid PNG end chunk");
+      ended = true;
       break;
     }
     at = body + length + 4; // skip the body and its CRC
   }
 
   if (!width || !height) throw new Error("blue noise: PNG has no IHDR");
+  if (!ended || !parts.length) throw new Error("blue noise: incomplete PNG");
 
   let compressed: Uint8Array;
   if (parts.length === 1) {
@@ -136,7 +149,9 @@ export async function decodeGreyscalePng(bytes: Uint8Array): Promise<GreyscaleIm
 
   const bytesPerSample = depth === 16 ? 2 : 1;
   const stride = width * bytesPerSample;
-  const rows = unfilter(await inflate(compressed), height, stride, bytesPerSample);
+  const raw = await inflate(compressed);
+  if (raw.length !== height * (stride + 1)) throw new Error("blue noise: invalid PNG scanline length");
+  const rows = unfilter(raw, height, stride, bytesPerSample);
 
   const samples = new Uint16Array(width * height);
   if (depth === 16) {

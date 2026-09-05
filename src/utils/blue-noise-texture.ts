@@ -14,6 +14,7 @@
  */
 
 import { decodeGreyscalePng, type GreyscaleImage } from "./png";
+import blueNoiseUrl from "../dither/data/blue-noise-1200x1600.png?no-inline";
 
 export const BLUE_NOISE_FILE = "blue-noise-1200x1600.png";
 
@@ -26,8 +27,8 @@ let source: BlueNoiseSource | null = null;
 /**
  * Point the loader at the PNG.
  *
- * Only needed where the bundler cannot resolve the asset next to this module --
- * a CommonJS build, say, or a worker served from somewhere else.
+ * Optional override for custom hosting or preloaded PNG bytes. Set it separately
+ * in each worker that processes images; module caches are local to their realm.
  */
 export function setBlueNoiseSource(next: BlueNoiseSource): void {
   source = next;
@@ -41,16 +42,7 @@ export function getBlueNoiseTexture(): GreyscaleImage | null {
 }
 
 function resolveSource(): BlueNoiseSource {
-  if (source) return source;
-  try {
-    // Spelt out in full because Vite only rewrites a static literal here; build
-    // it from BLUE_NOISE_FILE and the asset never gets emitted.
-    return new URL("../dither/data/blue-noise-1200x1600.png", import.meta.url);
-  } catch {
-    throw new Error(
-      `blue noise: cannot locate ${BLUE_NOISE_FILE}; call setBlueNoiseSource() with its URL`
-    );
-  }
+  return source ?? blueNoiseUrl;
 }
 
 async function readBytes(from: BlueNoiseSource): Promise<Uint8Array> {
@@ -58,7 +50,15 @@ async function readBytes(from: BlueNoiseSource): Promise<Uint8Array> {
   if (ArrayBuffer.isView(from)) {
     return new Uint8Array(from.buffer, from.byteOffset, from.byteLength);
   }
-  const response = await fetch(from instanceof URL ? from.href : from);
+  const url = from instanceof URL ? from.href : from;
+  if (url.startsWith("file:")) {
+    // Node's fetch does not support file URLs. Keep this optional import out of
+    // browser bundles; the file branch is only used by installed Node packages.
+    const moduleName = "node:fs/promises";
+    const { readFile } = await import(/* @vite-ignore */ moduleName);
+    return new Uint8Array(await readFile(new URL(url)));
+  }
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`blue noise: fetching ${BLUE_NOISE_FILE} failed with ${response.status}`);
   }
@@ -107,16 +107,17 @@ async function decode(bytes: Uint8Array): Promise<GreyscaleImage> {
 export function loadBlueNoiseTexture(): Promise<GreyscaleImage> {
   if (texture) return Promise.resolve(texture);
   if (!loading) {
-    loading = readBytes(resolveSource())
+    const pending = readBytes(resolveSource())
       .then(decode)
       .then((decoded) => {
-        texture = decoded;
+        if (loading === pending) texture = decoded;
         return decoded;
       })
       .catch((error) => {
-        loading = null; // a failed load must not poison every later attempt
+        if (loading === pending) loading = null;
         throw error;
       });
+    loading = pending;
   }
   return loading;
 }

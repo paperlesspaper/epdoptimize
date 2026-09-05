@@ -28,11 +28,22 @@ interface Simplex {
   readonly inverse: Float64Array;
 }
 
+interface Face {
+  readonly inks: readonly [number, number, number];
+  readonly u: readonly number[];
+  readonly v: readonly number[];
+  readonly uu: number;
+  readonly uv: number;
+  readonly vv: number;
+  readonly inverseDet: number;
+}
+
 interface CoverageSolver {
   readonly size: number;
   readonly linear: Float64Array; // size * 3, linear light in [0, 1]
   readonly lengths: Float64Array; // squared ink lengths, for the tie-break
   readonly simplices: readonly Simplex[];
+  readonly faces: readonly Face[];
 }
 
 const SRGB_TO_LINEAR = (() => {
@@ -44,7 +55,7 @@ const SRGB_TO_LINEAR = (() => {
   return table;
 })();
 
-/** Whether `buildCoverageSolver` will accept this palette. */
+/** Whether the palette size is eligible; coplanar palettes still fall back. */
 export function canCoverageDither(palette: number[][]): boolean {
   return palette.length >= 4 && palette.length <= MAX_COVERAGE_PALETTE;
 }
@@ -139,7 +150,36 @@ export function buildCoverageSolver(palette: number[][]): CoverageSolver | null 
     }
   }
 
-  return simplices.length > 0 ? { size, linear, lengths, simplices } : null;
+  if (!simplices.length) return null;
+
+  // Only supporting planes can contain the nearest point of an outside target.
+  // Keep coplanar triangles too: together they cover polygonal hull faces.
+  const faces: Face[] = [];
+  for (let i = 0; i < size - 2; i += 1) {
+    for (let j = i + 1; j < size - 1; j += 1) {
+      for (let k = j + 1; k < size; k += 1) {
+        const u = [0, 1, 2].map(c => linear[j * 3 + c] - linear[i * 3 + c]);
+        const v = [0, 1, 2].map(c => linear[k * 3 + c] - linear[i * 3 + c]);
+        const normal = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+        const uu = u.reduce((s, x) => s + x * x, 0);
+        const uv = u.reduce((s, x, c) => s + x * v[c], 0);
+        const vv = v.reduce((s, x) => s + x * x, 0);
+        const det = uu * vv - uv * uv;
+        if (det <= 1e-18) continue;
+        let positive = false;
+        let negative = false;
+        const epsilon = 1e-10 * Math.sqrt(det);
+        for (let ink = 0; ink < size; ink += 1) {
+          const side = normal.reduce((s, x, c) => s + x * (linear[ink * 3 + c] - linear[i * 3 + c]), 0);
+          positive ||= side > epsilon;
+          negative ||= side < -epsilon;
+        }
+        if (positive && negative) continue;
+        faces.push({ inks: [i, j, k], u, v, uu, uv, vv, inverseDet: 1 / det });
+      }
+    }
+  }
+  return { size, linear, lengths, simplices, faces };
 }
 
 /**
@@ -159,13 +199,12 @@ export function solveCoverageWeights(
   b: number,
   out: Float32Array
 ): void {
-  const { linear, lengths, simplices } = solver;
+  const { size, linear, lengths, simplices, faces } = solver;
   const targetR = SRGB_TO_LINEAR[r]!;
   const targetG = SRGB_TO_LINEAR[g]!;
   const targetB = SRGB_TO_LINEAR[b]!;
 
   out.fill(0);
-  let closest = Infinity;
   let tightest = Infinity;
   const candidate = new Float64Array(4);
 
@@ -174,49 +213,77 @@ export function solveCoverageWeights(
 
     let total = 0;
     for (let row = 0; row < 4; row += 1) {
-      const weight = Math.max(
-        0,
+      const weight =
         inverse[row * 4]! * targetR +
           inverse[row * 4 + 1]! * targetG +
           inverse[row * 4 + 2]! * targetB +
-          inverse[row * 4 + 3]!
-      );
-      candidate[row] = weight;
-      total += weight;
+          inverse[row * 4 + 3]!;
+      if (weight < -1e-9) { total = -1; break; }
+      candidate[row] = Math.max(0, weight);
+      total += candidate[row];
     }
     if (total < 1e-9) continue;
 
-    let mixR = 0;
-    let mixG = 0;
-    let mixB = 0;
     let spread = 0;
     for (let row = 0; row < 4; row += 1) {
       const weight = candidate[row]! / total;
       candidate[row] = weight;
       const ink = inks[row]!;
-      mixR += weight * linear[ink * 3]!;
-      mixG += weight * linear[ink * 3 + 1]!;
-      mixB += weight * linear[ink * 3 + 2]!;
       spread += weight * lengths[ink]!;
     }
 
-    const dr = mixR - targetR;
-    const dg = mixG - targetG;
-    const db = mixB - targetB;
-    const miss = dr * dr + dg * dg + db * db;
-
-    // Reach the colour first; only then prefer the tightest set of inks.
-    const better =
-      miss < closest - 1e-9 || (miss < closest + 1e-9 && spread < tightest);
-    if (!better) continue;
-
-    closest = miss;
+    if (spread >= tightest) continue;
     tightest = spread;
     out.fill(0);
     for (let row = 0; row < 4; row += 1) out[inks[row]!] = candidate[row]!;
   }
 
-  if (closest === Infinity) out[0] = 1; // every set collapsed; fall back to one ink
+  if (tightest < Infinity) return;
+
+  // Outside the hull, the optimum lies on a face, edge or vertex. Clamping
+  // negative tetrahedral weights is NOT a projection and can turn white yellow.
+  let closest = Infinity;
+  const consider = (i: number, j: number, k: number, a: number, b: number, c: number) => {
+    const dr = a * linear[i * 3] + b * linear[j * 3] + c * linear[k * 3] - targetR;
+    const dg = a * linear[i * 3 + 1] + b * linear[j * 3 + 1] + c * linear[k * 3 + 1] - targetG;
+    const db = a * linear[i * 3 + 2] + b * linear[j * 3 + 2] + c * linear[k * 3 + 2] - targetB;
+    const miss = dr * dr + dg * dg + db * db;
+    const spread = a * lengths[i] + b * lengths[j] + c * lengths[k];
+    if (miss > closest + 1e-12 || (Math.abs(miss - closest) <= 1e-12 && spread >= tightest)) return;
+    closest = miss;
+    tightest = spread;
+    out.fill(0);
+    out[i] += a;
+    out[j] += b;
+    out[k] += c;
+  };
+  for (let i = 0; i < size; i += 1) {
+    consider(i, i, i, 1, 0, 0);
+    for (let j = i + 1; j < size; j += 1) {
+      const r = linear[j * 3] - linear[i * 3];
+      const g = linear[j * 3 + 1] - linear[i * 3 + 1];
+      const b = linear[j * 3 + 2] - linear[i * 3 + 2];
+      const length = r * r + g * g + b * b;
+      if (length <= 1e-18) continue;
+      const t = Math.max(0, Math.min(1, ((targetR - linear[i * 3]) * r + (targetG - linear[i * 3 + 1]) * g + (targetB - linear[i * 3 + 2]) * b) / length));
+      consider(i, j, j, 1 - t, t, 0);
+    }
+  }
+  for (const { inks: [i, j, k], u, v, uu, uv, vv, inverseDet } of faces) {
+    const r = targetR - linear[i * 3];
+    const g = targetG - linear[i * 3 + 1];
+    const b = targetB - linear[i * 3 + 2];
+    const du = r * u[0] + g * u[1] + b * u[2];
+    const dv = r * v[0] + g * v[1] + b * v[2];
+    let beta = (du * vv - dv * uv) * inverseDet;
+    let gamma = (dv * uu - du * uv) * inverseDet;
+    const alpha = 1 - beta - gamma;
+    if (alpha < -1e-9 || beta < -1e-9 || gamma < -1e-9) continue;
+    beta = Math.max(0, beta);
+    gamma = Math.max(0, gamma);
+    const sum = Math.max(0, alpha) + beta + gamma;
+    consider(i, j, k, Math.max(0, alpha) / sum, beta / sum, gamma / sum);
+  }
 }
 
 /**
@@ -238,9 +305,13 @@ export function coverageDither(
   if (!solver) return false;
 
   const { size } = solver;
-  // The solve is the expensive part and a photograph repeats colours heavily, so
-  // it is worth keeping; the threshold it gets spent against is per pixel.
-  const cache = new Map<number, Float32Array>();
+  // Exact RGB keys in a bounded, direct-mapped cache. Collisions only recompute
+  // the same solution; they never approximate colours. At most 2.25 MiB for 8 inks.
+  const cacheBits = Math.min(16, Math.max(8, Math.ceil(Math.log2(width * height || 1))));
+  const cacheSize = 2 ** cacheBits;
+  const keys = new Uint32Array(cacheSize).fill(0xffffffff);
+  const cache = new Float32Array(cacheSize * size);
+  const weights = new Float32Array(size);
   const reportEvery = Math.max(1, Math.floor(height / 10));
 
   for (let y = 0; y < height; y += 1) {
@@ -251,19 +322,22 @@ export function coverageDither(
       const b = data[i + 2]!;
 
       const key = (r << 16) | (g << 8) | b;
-      let weights = cache.get(key);
-      if (!weights) {
-        weights = new Float32Array(size);
+      const slot = Math.imul(key, 0x9e3779b1) >>> (32 - cacheBits);
+      const offset = slot * size;
+      if (keys[slot] !== key) {
         solveCoverageWeights(solver, r, g, b, weights);
-        cache.set(key, weights);
+        keys[slot] = key;
+        cache.set(weights, offset);
       }
 
       // Inverse-CDF sampling: the first ink the variate has not yet walked past.
       const variate = variateAt(x, y);
       let cumulative = 0;
-      let index = size - 1;
+      let index = 0;
       for (let ink = 0; ink < size; ink += 1) {
-        cumulative += weights[ink]!;
+        const weight = cache[offset + ink];
+        if (weight > 0) index = ink;
+        cumulative += weight;
         if (variate < cumulative) {
           index = ink;
           break;

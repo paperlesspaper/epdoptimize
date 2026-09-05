@@ -83,6 +83,8 @@ export const aitjcizeSpectra6Palette = getDefaultPalette("aitjcize-spectra6");
 export const acepPalette = getDefaultPalette("acep");
 
 export { replaceColors } from "./replaceColors/replaceColors";
+export { setBlueNoiseSource } from "./utils/blue-noise-texture";
+export type { BlueNoiseSource } from "./utils/blue-noise-texture";
 export type {
   ReplaceColorsOptions,
   ReplaceColorsPalette,

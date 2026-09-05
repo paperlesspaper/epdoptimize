@@ -36,7 +36,8 @@
     "release:current": "VERSION=$(node -p \"require('./package.json').version\") && git tag \"v$VERSION\" && git push origin main \"v$VERSION\" && gh release create \"v$VERSION\" --generate-notes",
     "release:patch": "npm version patch && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
     "release:minor": "npm version minor && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
-    "release:major": "npm version major && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes"
+    "release:major": "npm version major && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
+    "test": "npm run build && node --experimental-strip-types --test tests/*.test.mjs"
   },
   "files": [
     "dist"
@@ -45,8 +46,7 @@
     "assemblyscript": "^0.28.17",
     "gh-pages": "^6.3.0",
     "typescript": "^5.0.0",
-    "vite": "^8.0.16",
-    "webgpu": "^0.6.0"
+    "vite": "^8.0.16"
   },
   "dependencies": {
     "rgbquant": "github:alexharris/RgbQuant.js"
