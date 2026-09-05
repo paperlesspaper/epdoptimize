@@ -806,7 +806,43 @@ Dithering creates the impression of intermediate colors by distributing quantiza
 | `shiauFan2`           | Wider Shiau-Fan variant from DitherIt v3.                                            |
 | `simple2D`            | Whole-image mode that splits error between the next pixel and next row.              |
 | `riemersma`           | Whole-image mode that diffuses error along a Hilbert curve.                          |
-| `blueNoise`           | Threshold mode using a 64x64 high-frequency blue-noise style tile.                   |
+| `blueNoise`           | Threshold mode using a 1200x1600 16-bit blue-noise mask, loaded on first use.         |
+
+### Coverage-based Bayer and Blue Noise
+
+`ordered`, `ditherItOrdered`, `blueNoise`, and `ditherItBlueNoise` calculate
+linear-light mixtures for palettes of 4–8 colors that span a three-dimensional
+color gamut, including Spectra 6 and Gallery/ACeP. Colors outside that gamut
+map to the closest achievable mixture. Pure grayscale palettes and palettes
+outside this size range retain the previous threshold-and-match algorithm.
+Blue Noise uses the new mask in either case. Error diffusion, including
+Floyd–Steinberg, is unchanged.
+
+Coverage matching always uses linear RGB; `colorMatching` still applies to
+optional edge cleanup and to the fallback path where supported. The exact-color
+cache is bounded to 2.25 MiB at most, but photographs with many distinct colors
+can take longer than the previous threshold algorithm.
+
+The Blue Noise mask is a separate approximately 3.8 MB PNG in `dist/assets`,
+not embedded in JavaScript. Keep the assets alongside the installed package or
+include them in your deployment. Browser and worker builds fetch the mask on
+first use; Node.js ESM and CommonJS read it from the package. For custom asset
+hosting, or to provide preloaded PNG bytes, use the public override:
+
+```js
+import { setBlueNoiseSource } from "epdoptimize";
+
+setBlueNoiseSource("https://your-host.example/assets/blue-noise-1200x1600.png");
+// Also accepts URL, ArrayBuffer, and typed-array views of PNG bytes.
+```
+
+Set the override before the first Blue Noise conversion and separately in each
+worker that processes images. Other algorithms do not load the mask. Failed
+loads reject the conversion and can be retried.
+
+Run `npm test` (Node.js 24) for coverage, PNG decoding, asset packaging, and
+ESM/CommonJS runtime regression tests; run `npm run typecheck` for the library
+and demo TypeScript checks.
 
 ## How It Works
 

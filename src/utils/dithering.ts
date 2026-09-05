@@ -1,4 +1,5 @@
-import { BLUE_NOISE_TEXTURE } from './blue-noise-texture'
+import { getBlueNoiseTexture } from './blue-noise-texture'
+import { coverageDither } from './coverage'
 import { rgbToOklab } from './oklab'
 import RgbQuant from 'rgbquant'
 
@@ -38,6 +39,20 @@ export const BAYER_MATRICES: Record<BayerSize, number[][]> = {
   4: toBayerThresholds(generateBayerIndex(4)),
   8: toBayerThresholds(generateBayerIndex(8)),
   16: toBayerThresholds(generateBayerIndex(16))
+}
+
+// The ranks as a uniform variate in [0, 1): the cell centres, or the two extreme
+// ranks would each cover only half a cell.
+function toBayerVariates(m: number[][]): number[][] {
+  const n = m.length * m.length
+  return m.map(row => row.map(v => (v + 0.5) / n))
+}
+
+export const BAYER_VARIATES: Record<BayerSize, number[][]> = {
+  2: toBayerVariates(generateBayerIndex(2)),
+  4: toBayerVariates(generateBayerIndex(4)),
+  8: toBayerVariates(generateBayerIndex(8)),
+  16: toBayerVariates(generateBayerIndex(16))
 }
 
 // Error diffusion kernels: each entry is [weight, dx, dy]
@@ -142,29 +157,40 @@ export function bayerDither(
   bayerSize: BayerSize = 4,
   smoothDownscale = false
 ) {
-  const matrix = BAYER_MATRICES[bayerSize]
   const size = bayerSize
+  const variates = BAYER_VARIATES[bayerSize]
 
-  const imageDataLength = imageData.data.length
-  const w = imageData.width
+  const covered = coverageDither(
+    imageData.data,
+    imageData.width,
+    imageData.height,
+    palette,
+    (x, y) => variates[y % size]![x % size]!
+  )
 
-  const newPalette = palette.map((color, id) => [id, ...color])
+  if (!covered) {
+    // Too many inks to solve the mixture exactly; perturb and snap instead.
+    const matrix = BAYER_MATRICES[bayerSize]
+    const imageDataLength = imageData.data.length
+    const w = imageData.width
+    const newPalette = palette.map((color, id) => [id, ...color])
 
-  for (let currentPixel = 0; currentPixel <= imageDataLength - 4; currentPixel += 4) {
-    const x = (currentPixel / 4) % w
-    const y = Math.floor(currentPixel / 4 / w)
+    for (let currentPixel = 0; currentPixel <= imageDataLength - 4; currentPixel += 4) {
+      const x = (currentPixel / 4) % w
+      const y = Math.floor(currentPixel / 4 / w)
 
-    const threshold = matrix[y % size]![x % size]!
+      const threshold = matrix[y % size]![x % size]!
 
-    const map = Math.max(0, Math.min(255, imageData.data[currentPixel]! + 128 - threshold))
-    const map2 = Math.max(0, Math.min(255, imageData.data[currentPixel + 1]! + 128 - threshold))
-    const map3 = Math.max(0, Math.min(255, imageData.data[currentPixel + 2]! + 128 - threshold))
+      const map = Math.max(0, Math.min(255, imageData.data[currentPixel]! + 128 - threshold))
+      const map2 = Math.max(0, Math.min(255, imageData.data[currentPixel + 1]! + 128 - threshold))
+      const map3 = Math.max(0, Math.min(255, imageData.data[currentPixel + 2]! + 128 - threshold))
 
-    const closestColor = getClosestColor(newPalette, [map, map2, map3])
+      const closestColor = getClosestColor(newPalette, [map, map2, map3])
 
-    imageData.data[currentPixel] = closestColor[1]!
-    imageData.data[currentPixel + 1] = closestColor[2]!
-    imageData.data[currentPixel + 2] = closestColor[3]!
+      imageData.data[currentPixel] = closestColor[1]!
+      imageData.data[currentPixel + 1] = closestColor[2]!
+      imageData.data[currentPixel + 2] = closestColor[3]!
+    }
   }
 
   ctx.putImageData(imageData, 0, 0)
@@ -457,32 +483,53 @@ export function blueNoiseDither(
   blockSize: number,
   smoothDownscale = false
 ) {
-  const imageDataLength = imageData.data.length
-  const w = imageData.width
+  const mask = getBlueNoiseTexture()
+  if (!mask) {
+    throw new Error('blue noise: call loadBlueNoiseTexture() before dithering')
+  }
+  // The mask is the size of a panel and wraps, so it tiles without a seam even
+  // when the image is bigger. Its samples are ranks, so dividing by one past the
+  // top rank turns them into a uniform variate over [0, 1).
+  const maskScale = 1 / (mask.maxValue + 1)
+  const variateAt = (x: number, y: number) =>
+    mask.samples[(y % mask.height) * mask.width + (x % mask.width)]! * maskScale
 
-  const newPalette = palette.map((color, id) => [id, ...color])
-  const colorCache = new Map<number, number[]>()
+  const covered = coverageDither(
+    imageData.data,
+    imageData.width,
+    imageData.height,
+    palette,
+    variateAt
+  )
 
-  for (let currentPixel = 0; currentPixel <= imageDataLength - 4; currentPixel += 4) {
-    const x = (currentPixel / 4) % w
-    const y = Math.floor(currentPixel / 4 / w)
+  if (!covered) {
+    // Too many inks to solve the mixture exactly; perturb and snap instead.
+    const imageDataLength = imageData.data.length
+    const w = imageData.width
+    const newPalette = palette.map((color, id) => [id, ...color])
+    const colorCache = new Map<number, number[]>()
 
-    const threshold = BLUE_NOISE_TEXTURE[(y % 64) * 64 + (x % 64)]!
+    for (let currentPixel = 0; currentPixel <= imageDataLength - 4; currentPixel += 4) {
+      const x = (currentPixel / 4) % w
+      const y = Math.floor(currentPixel / 4 / w)
 
-    const r = Math.max(0, Math.min(255, imageData.data[currentPixel]! + 128 - threshold))
-    const g = Math.max(0, Math.min(255, imageData.data[currentPixel + 1]! + 128 - threshold))
-    const b = Math.max(0, Math.min(255, imageData.data[currentPixel + 2]! + 128 - threshold))
+      const threshold = variateAt(x, y) * 255
 
-    const key = (r << 16) | (g << 8) | b
-    let closest = colorCache.get(key)
-    if (!closest) {
-      closest = getClosestColor(newPalette, [r, g, b])
-      colorCache.set(key, closest)
+      const r = Math.max(0, Math.min(255, Math.round(imageData.data[currentPixel]! + 128 - threshold)))
+      const g = Math.max(0, Math.min(255, Math.round(imageData.data[currentPixel + 1]! + 128 - threshold)))
+      const b = Math.max(0, Math.min(255, Math.round(imageData.data[currentPixel + 2]! + 128 - threshold)))
+
+      const key = (r << 16) | (g << 8) | b
+      let closest = colorCache.get(key)
+      if (!closest) {
+        closest = getClosestColor(newPalette, [r, g, b])
+        colorCache.set(key, closest)
+      }
+
+      imageData.data[currentPixel] = closest[1]!
+      imageData.data[currentPixel + 1] = closest[2]!
+      imageData.data[currentPixel + 2] = closest[3]!
     }
-
-    imageData.data[currentPixel] = closest[1]!
-    imageData.data[currentPixel + 1] = closest[2]!
-    imageData.data[currentPixel + 2] = closest[3]!
   }
 
   ctx.putImageData(imageData, 0, 0)

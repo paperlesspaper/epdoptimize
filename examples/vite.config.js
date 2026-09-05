@@ -76,6 +76,8 @@ export default defineConfig({
   },
   server: {
     open: true,
+    // The root is examples/, but the library and its assets live in ../src.
+    fs: { allow: [path.resolve(__dirname, "..")] },
   },
   plugins: [
     {

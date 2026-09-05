@@ -9,6 +9,8 @@ import colorHelpers from "./functions/color-helpers";
 import utilities from "./functions/utilities";
 import findClosestPaletteColor from "./functions/find-closest-palette-color";
 import { applyWasmRgbErrorDiffusion } from "./wasm-error-diffusion-rgb";
+import { loadBlueNoiseTexture } from "../utils/blue-noise-texture";
+import { coverageDither } from "../utils/coverage";
 import {
   bayerDither,
   blueNoiseDither,
@@ -541,6 +543,8 @@ const ditherImageData = async (
   }
 
   if (isUtilsDitheringType(options.ditheringType)) {
+    // The mask is a file, so it has to be in hand before the synchronous dither.
+    if (needsBlueNoise(options.ditheringType)) await loadBlueNoiseTexture();
     applyUtilsDithering(image, options, colorPalette);
     applyEdgeHandling(image, options, colorPalette, edgeSourceData);
     return;
@@ -550,6 +554,25 @@ const ditherImageData = async (
     options.orderedDitheringMatrix[0],
     options.orderedDitheringMatrix[1],
   ]);
+
+  if (options.ditheringType === "ordered") {
+    const rows = thresholdMap.length;
+    const columns = thresholdMap[0].length;
+    const cells = rows * columns;
+    // The map holds contiguous ranks, so the cell centres are the uniform
+    // variate the coverage solve spends on choosing an ink.
+    const covered = coverageDither(
+      image.data,
+      width,
+      height,
+      colorPalette,
+      (x, y) => (thresholdMap[y % rows][x % columns] + 0.5) / cells
+    );
+    if (covered) {
+      applyEdgeHandling(image, options, colorPalette, edgeSourceData);
+      return;
+    }
+  }
 
   let current: number;
   let newPixel: RGBA;
@@ -589,6 +612,7 @@ const ditherImageData = async (
     }
 
     if (options.ditheringType === "ordered") {
+      // Only reached when the palette is too large or too small to solve.
       const orderedDitherThreshold = 256 / 4;
       newPixel = orderedDitherPixelValue(
         oldPixel,
@@ -788,6 +812,9 @@ const isUtilsDitheringType = (ditheringType: DitheringType | undefined) =>
   ditheringType === "ditherItBlueNoise" ||
   ditheringType === "ditherItSimple2D" ||
   ditheringType === "ditherItRiemersma";
+
+const needsBlueNoise = (ditheringType: DitheringType | undefined) =>
+  ditheringType === "blueNoise" || ditheringType === "ditherItBlueNoise";
 
 type UtilsColorSpace = "rgb" | "oklab";
 
