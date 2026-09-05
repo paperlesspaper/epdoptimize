@@ -74,6 +74,8 @@ export const genericFourGrayscalePalette = getDefaultPalette(
 export const trmnlSeeed16GrayscalePalette = getDefaultPalette(
   "trmnl-seeed-16-grayscale"
 );
+/** Generic, evenly spaced 4-bit gray codes; the legacy device-named export remains supported. */
+export const genericSixteenGrayscalePalette = trmnlSeeed16GrayscalePalette;
 export const gameboyPalette = getDefaultPalette("gameboy");
 export const spectra6legacyPalette = getDefaultPalette("spectra6legacy");
 export const spectra6Palette = getDefaultPalette("spectra6");

@@ -22,6 +22,14 @@ export const AUTO_RATING_STORAGE_KEY = "epdoptimize:auto-ratings:v1";
 export const CUSTOM_PALETTES_STORAGE_KEY = "epdoptimize:custom-palettes:v1";
 
 export const SCREEN_RESOLUTIONS = {
+  trmnl_x: {
+    name: "trmnl_x", label: "10.3 Inch TRMNL X (16 grayscale)",
+    width: 1872, height: 1404,
+  },
+  seeed_e1003: {
+    name: "seeed_e1003", label: "10.3 Inch Seeed reTerminal E1003 (16 grayscale)",
+    width: 1872, height: 1404,
+  },
   spectra6_1_54: {
     name: "spectra6_1_54",
     label: "1.54 Inch Spectra 6",
@@ -148,7 +156,7 @@ export const PALETTE_OPTIONS = {
     palette: genericFourGrayscalePalette,
   },
   "trmnl-seeed-16-grayscale": {
-    label: "16 Grayscale (TRMNL / Seeed Studio)",
+    label: "16 Grayscale (generic; TRMNL / Seeed)",
     exportName: "trmnlSeeed16GrayscalePalette",
     palette: trmnlSeeed16GrayscalePalette,
   },
