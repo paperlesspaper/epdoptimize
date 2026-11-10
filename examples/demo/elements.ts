@@ -105,6 +105,7 @@ export const colorMatchingSelect = $("colorMatching") as HTMLSelectElement;
 export const processingEngineSelect = $(
   "processingEngine",
 ) as HTMLSelectElement;
+export const protectTextAndGraphicsCheckbox = $("protectTextAndGraphics") as HTMLInputElement;
 export const edgePreservationCheckbox = $(
   "edgePreservation",
 ) as HTMLInputElement;

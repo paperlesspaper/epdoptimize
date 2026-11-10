@@ -64,6 +64,7 @@ import {
   dynamicRangeStrengthInput,
   edgeAntialiasingCheckbox,
   edgeAntialiasingStrengthInput,
+  protectTextAndGraphicsCheckbox,
   edgePreservationCheckbox,
   edgePreservationStrengthInput,
   errorDiffusionMatrixSelect,
@@ -200,6 +201,7 @@ const AUTO_DITHER_CONTROL_IDS = new Set([
   "serpentine",
   "colorMatching",
   "processingEngine",
+  "protectTextAndGraphics",
   "edgePreservation",
   "edgePreservationStrength",
   "edgeAntialiasing",
@@ -1189,6 +1191,11 @@ function applyAutoDitherAndMatchingToUI(options: Partial<DitherImageOptions>) {
     processingEngineSelect,
     options.processingEngine ?? DEFAULT_DITHER_OPTIONS.processingEngine,
   );
+  // This is an explicit user preference, not an automatic preset suggestion.
+  if (options.protectTextAndGraphics !== undefined) {
+    protectTextAndGraphicsCheckbox.checked = options.protectTextAndGraphics === true ||
+      (typeof options.protectTextAndGraphics === "object" && options.protectTextAndGraphics.enabled !== false);
+  }
   edgePreservationCheckbox.checked =
     options.edgePreservation?.enabled ??
     DEFAULT_DITHER_OPTIONS.edgePreservation.enabled;
@@ -1493,6 +1500,7 @@ function getCanvasDitherOptionsFromUI(palette: PaletteColorEntry[]) {
     palette,
     colorMatching: colorMatchingSelect.value as DitherImageOptions["colorMatching"],
     processingEngine: processingEngineSelect.value as DitherProcessingEngine,
+    ...(protectTextAndGraphicsCheckbox.checked ? { protectTextAndGraphics: true } : {}),
     ...(edgePreservation.enabled ? { edgePreservation } : {}),
     ...(edgeAntialiasing.enabled ? { edgeAntialiasing } : {}),
     calibrate: true,
@@ -1553,6 +1561,9 @@ function pickCanvasDitherOptions(
       ? { serpentine: options.serpentine }
       : {}),
     ...(options?.colorMatching ? { colorMatching: options.colorMatching } : {}),
+    ...(options?.protectTextAndGraphics
+      ? { protectTextAndGraphics: options.protectTextAndGraphics }
+      : {}),
     ...(options?.edgePreservation
       ? { edgePreservation: options.edgePreservation }
       : {}),
@@ -1569,9 +1580,13 @@ function getSelectedAutoImageAdjustmentOptions() {
 }
 
 function getSelectedAutoCanvasDitherOptions() {
-  return autoFlowSelect.value === "previous"
+  const suggested = autoFlowSelect.value === "previous"
     ? pickCanvasDitherOptions(previousAutoSuggestion?.ditherOptions)
     : (layeredCanvasDitherSuggestion?.ditherOptions ?? {});
+  return {
+    ...suggested,
+    ...(protectTextAndGraphicsCheckbox.checked ? { protectTextAndGraphics: true } : {}),
+  };
 }
 
 function getAutoAnalysisCacheKey() {
@@ -1642,6 +1657,7 @@ function getAutoDitherOptionsFromUI(palette: PaletteColorEntry[]) {
     palette,
     colorMatching: colorMatchingSelect.value as DitherImageOptions["colorMatching"],
     processingEngine: processingEngineSelect.value as DitherProcessingEngine,
+    ...(protectTextAndGraphicsCheckbox.checked ? { protectTextAndGraphics: true } : {}),
     ...(edgePreservation.enabled ? { edgePreservation } : {}),
     ...(edgeAntialiasing.enabled ? { edgeAntialiasing } : {}),
     calibrate: true,
@@ -1828,6 +1844,9 @@ function getCompactDitherOptions(options: Partial<DitherImageOptions>) {
 
   if (options.edgePreservation) configOptions.edgePreservation = options.edgePreservation;
   if (options.edgeAntialiasing) configOptions.edgeAntialiasing = options.edgeAntialiasing;
+  if (options.protectTextAndGraphics) {
+    configOptions.protectTextAndGraphics = options.protectTextAndGraphics;
+  }
 
   if (options.toneMapping) {
     configOptions.toneMapping = options.toneMapping;
@@ -1883,7 +1902,10 @@ function importConfig(text: string) {
   paletteSelect.value = paletteKey;
   processingPresetSelect.value = "manual";
   autoControlsDirty = true;
-  applyAutoDitherAndMatchingToUI(config.canvasDitherOptions);
+  applyAutoDitherAndMatchingToUI({
+    ...config.canvasDitherOptions,
+    protectTextAndGraphics: config.canvasDitherOptions.protectTextAndGraphics ?? false,
+  });
   applyAutoAdjustmentsToUI(config.imageAdjustmentOptions);
   importedConfig = config;
   importedControlBaseline = { image: getImageAdjustmentOptionsFromUI(), canvas: getImportCanvasControls() };
@@ -2510,6 +2532,7 @@ const controls = [
   serpentineCheckbox,
   colorMatchingSelect,
   processingEngineSelect,
+  protectTextAndGraphicsCheckbox,
   edgePreservationCheckbox,
   edgePreservationStrengthInput,
   edgeAntialiasingCheckbox,
