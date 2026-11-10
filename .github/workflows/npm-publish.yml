@@ -21,8 +21,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-#      - run: npm ci
-#      - run: npm test
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
 
   publish-npm:
     needs: build
