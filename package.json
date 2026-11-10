@@ -38,7 +38,10 @@
     "release:patch": "npm version patch && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
     "release:minor": "npm version minor && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
     "release:major": "npm version major && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
-    "test": "npm run build && node --experimental-strip-types --test tests/*.test.mjs"
+    "test": "npm run build && node --experimental-strip-types --test tests/*.test.mjs",
+    "prebuild:js": "node scripts/patch-rgbquant.mjs",
+    "prebuild:examples": "node scripts/patch-rgbquant.mjs",
+    "preexamples:dev": "node scripts/patch-rgbquant.mjs"
   },
   "files": [
     "dist"
