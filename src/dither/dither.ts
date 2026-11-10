@@ -8,6 +8,7 @@ import colorHelpers from "./functions/color-helpers";
 // import colorPaletteFromImage from "./functions/color-palette-from-image";
 import utilities from "./functions/utilities";
 import findClosestPaletteColor from "./functions/find-closest-palette-color";
+import { lumaThresholdDither } from "./functions/luma-threshold";
 import {
   detectTextAndGraphics,
   type TextAndGraphicsProtectionOptions,
@@ -581,10 +582,34 @@ const ditherImageData = async (
     options.orderedDitheringMatrix[1],
   ]);
 
+  const grayscalePalette = colorPalette.length > 0 && colorPalette.every(
+    ([r, g, b]) => r === g && g === b
+  );
+  if (options.ditheringType === "random" && colorPalette.length) {
+    const thresholdAt = () => Math.random();
+    if (options.randomDitheringType === "blackAndWhite" || grayscalePalette) {
+      const sorted = [...colorPalette].sort((a, b) => luma709(...a) - luma709(...b));
+      lumaThresholdDither(image, options.randomDitheringType === "blackAndWhite"
+        ? [sorted[0], sorted[sorted.length - 1]] : sorted, thresholdAt);
+      finish();
+      return;
+    }
+    if (coverageDither(image.data, width, height, colorPalette, thresholdAt)) {
+      finish();
+      return;
+    }
+  }
+
   if (options.ditheringType === "ordered") {
     const rows = thresholdMap.length;
     const columns = thresholdMap[0].length;
     const cells = rows * columns;
+    if (grayscalePalette) {
+      lumaThresholdDither(image, colorPalette,
+        (x, y) => (thresholdMap[y % rows][x % columns] + 0.5) / cells);
+      finish();
+      return;
+    }
     // The map holds contiguous ranks, so the cell centres are the uniform
     // variate the coverage solve spends on choosing an ink.
     const covered = coverageDither(
@@ -626,6 +651,7 @@ const ditherImageData = async (
       options.randomDitheringType === "rgb"
     ) {
       newPixel = randomDitherPixelValue(oldPixel);
+      newPixel = findClosestPaletteColor(newPixel, colorPalette, options.colorMatching);
       setPixel(currentPixel, newPixel);
     }
 
@@ -634,12 +660,13 @@ const ditherImageData = async (
       options.randomDitheringType === "blackAndWhite"
     ) {
       newPixel = randomDitherBlackAndWhitePixelValue(oldPixel);
+      newPixel = findClosestPaletteColor(newPixel, colorPalette, options.colorMatching);
       setPixel(currentPixel, newPixel);
     }
 
     if (options.ditheringType === "ordered") {
       // Only reached when the palette is too large or too small to solve.
-      const orderedDitherThreshold = 256 / 4;
+      const orderedDitherThreshold = 256;
       newPixel = orderedDitherPixelValue(
         oldPixel,
         pixelXY(currentPixel / 4, width),
@@ -1575,10 +1602,10 @@ const orderedDitherPixelValue = (
   threshold: number
 ): RGBA => {
   const factor =
-    thresholdMap[coordinates[1] % thresholdMap.length][
+    (thresholdMap[coordinates[1] % thresholdMap.length][
       coordinates[0] % thresholdMap[0].length
-    ] /
-    (thresholdMap.length * thresholdMap[0].length);
+    ] + 0.5) /
+    (thresholdMap.length * thresholdMap[0].length) - 0.5;
   return [
     clampByte(pixel[0] + factor * threshold),
     clampByte(pixel[1] + factor * threshold),
