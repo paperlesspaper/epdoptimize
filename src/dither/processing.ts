@@ -368,15 +368,26 @@ export const toScalar = (value: LevelRGB | undefined, fallback: number) => {
 };
 
 const rgbToXyz = (r: number, g: number, b: number) => {
-  const rn = srgbToLinear[r];
-  const gn = srgbToLinear[g];
-  const bn = srgbToLinear[b];
+  const rn = linearizeSrgbChannel(r);
+  const gn = linearizeSrgbChannel(g);
+  const bn = linearizeSrgbChannel(b);
 
   return [
     (rn * 0.4124564 + gn * 0.3575761 + bn * 0.1804375) * 100,
     (rn * 0.2126729 + gn * 0.7151522 + bn * 0.072175) * 100,
     (rn * 0.0193339 + gn * 0.119192 + bn * 0.9503041) * 100,
   ] as RGB;
+};
+
+// Diffusion candidates contain fractional and out-of-range channels. Preserve
+// these for matching; indexing the byte lookup with them would produce NaN.
+const linearizeSrgbChannel = (value: number) => {
+  const cached = srgbToLinear[value];
+  if (cached !== undefined) return cached;
+  const normalized = value / 255;
+  return normalized > 0.04045
+    ? Math.pow((normalized + 0.055) / 1.055, 2.4)
+    : normalized / 12.92;
 };
 
 const xyzToLab = (x: number, y: number, z: number) => {

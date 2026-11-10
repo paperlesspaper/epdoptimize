@@ -1042,11 +1042,20 @@ const applyErrorDiffusion = (
   colorMatching: ColorMatchingMode,
   serpentine: boolean
 ) => {
-  const sourceData = new Uint8ClampedArray(image.data);
   const data = image.data;
   const matcher = createPaletteMatcher(colorPalette, colorMatching);
+  // Keep signed, fractional errors separate from the byte output. Clipping an
+  // intermediate channel loses error (notably negative red in cyan regions).
+  // Only the current and upcoming kernel rows are needed.
+  const errorRows = Math.min(
+    height,
+    1 + Math.max(0, ...diffusionMap.map((d) => d.offset[1]))
+  );
+  const rowLength = width * 3;
+  const errors = new Float64Array(errorRows * rowLength);
 
   for (let y = 0; y < height; y++) {
+    const errorRow = (y % errorRows) * rowLength;
     const reverse = serpentine && y % 2 === 1;
     const xStart = reverse ? width - 1 : 0;
     const xEnd = reverse ? -1 : width;
@@ -1054,13 +1063,14 @@ const applyErrorDiffusion = (
 
     for (let x = xStart; x !== xEnd; x += xStep) {
       const currentPixel = (y * width + x) * 4;
-      const oldR = data[currentPixel];
-      const oldG = data[currentPixel + 1];
-      const oldB = data[currentPixel + 2];
+      const sourceR = data[currentPixel];
+      const sourceG = data[currentPixel + 1];
+      const sourceB = data[currentPixel + 2];
+      const errorPixel = errorRow + x * 3;
+      const oldR = sourceR + errors[errorPixel];
+      const oldG = sourceG + errors[errorPixel + 1];
+      const oldB = sourceB + errors[errorPixel + 2];
       const oldA = data[currentPixel + 3];
-      const sourceR = sourceData[currentPixel];
-      const sourceG = sourceData[currentPixel + 1];
-      const sourceB = sourceData[currentPixel + 2];
       const closestIndex = matcher.findIndex(
         oldR,
         oldG,
@@ -1079,9 +1089,18 @@ const applyErrorDiffusion = (
       data[currentPixel + 2] = newB;
       data[currentPixel + 3] = newA;
 
-      const errorR = oldR - newR;
-      const errorG = oldG - newG;
-      const errorB = oldB - newB;
+      // Out-of-gamut areas cannot discharge all their error. Bound the vector
+      // to one channel span, retaining its direction, sign and fractional parts.
+      // This prevents error buildup from contaminating distant image regions.
+      const residualR = oldR - newR;
+      const residualG = oldG - newG;
+      const residualB = oldB - newB;
+      const errorScale = 255 / Math.max(
+        255, Math.abs(residualR), Math.abs(residualG), Math.abs(residualB)
+      );
+      const errorR = residualR * errorScale;
+      const errorG = residualG * errorScale;
+      const errorB = residualB * errorScale;
 
       for (let index = 0; index < diffusionMap.length; index += 1) {
         const diffusion = diffusionMap[index];
@@ -1090,17 +1109,14 @@ const applyErrorDiffusion = (
         const ny = y + diffusion.offset[1];
         if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
 
-        const pixelIndex = (ny * width + nx) * 4;
         const factor = diffusion.factor;
-        data[pixelIndex] = clampByte(data[pixelIndex] + errorR * factor);
-        data[pixelIndex + 1] = clampByte(
-          data[pixelIndex + 1] + errorG * factor
-        );
-        data[pixelIndex + 2] = clampByte(
-          data[pixelIndex + 2] + errorB * factor
-        );
+        const targetError = (ny % errorRows) * rowLength + nx * 3;
+        errors[targetError] += errorR * factor;
+        errors[targetError + 1] += errorG * factor;
+        errors[targetError + 2] += errorB * factor;
       }
     }
+    errors.fill(0, errorRow, errorRow + rowLength);
   }
 };
 

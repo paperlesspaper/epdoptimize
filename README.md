@@ -410,6 +410,16 @@ await ditherImage(sourceCanvas, destinationCanvas, {
 
 Unsupported combinations currently fall back to the JavaScript implementation.
 
+Native error diffusion keeps signed, fractional RGB errors in a small rolling
+`Float64` buffer in both engines. Intermediate values are not rounded into the
+8-bit output image. When a residual exceeds a channel span (255), the entire
+error vector is scaled down together, preserving its direction while preventing
+unrepresentable highlights from bleeding into distant regions. This improves
+color retention but does not expand the display palette's gamut.
+
+After changing the AssemblyScript kernel, run `npm run build:wasm` to rebuild
+and update the embedded module, then `npm run test:error-diffusion`.
+
 ### `applyImageAdjustments(sourceCanvas, destinationCanvas, options)`
 
 Runs only the image adjustment stage, including tone mapping, range fitting,
