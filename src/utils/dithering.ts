@@ -209,7 +209,8 @@ export function kernelDiffusionDither(
   kernelName: string,
   serpentine: boolean,
   colorSpace: 'rgb' | 'oklab',
-  smoothDownscale = false
+  smoothDownscale = false,
+  protectionMask?: Uint8Array
 ) {
   const { width, height } = imageData
   const data = imageData.data
@@ -231,6 +232,7 @@ export function kernelDiffusionDither(
       for (let x = xStart; x !== xEnd; x += xStep) {
         const i = (y * width + x) * 4
         const idx = y * width + x
+        if (protectionMask?.[idx]) continue
 
         const [pixL, pixA, pixB] = rgbToOklab(data[i]!, data[i + 1]!, data[i + 2]!)
         const rawL = pixL + errL[idx]!
@@ -266,6 +268,7 @@ export function kernelDiffusionDither(
           const ny = y + kdy
           if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue
           const nidx = ny * width + nx
+          if (protectionMask?.[nidx]) continue
           errL[nidx]! += eL * weight
           errA[nidx]! += eA * weight
           errB[nidx]! += eB * weight
@@ -287,6 +290,7 @@ export function kernelDiffusionDither(
       for (let x = xStart; x !== xEnd; x += xStep) {
         const i = (y * width + x) * 4
         const idx = y * width + x
+        if (protectionMask?.[idx]) continue
 
         const rawR = data[i]! + errR[idx]!
         const rawG = data[i + 1]! + errG[idx]!
@@ -324,6 +328,7 @@ export function kernelDiffusionDither(
           const ny = y + kdy
           if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue
           const nidx = ny * width + nx
+          if (protectionMask?.[nidx]) continue
           errR[nidx]! += eR * weight
           errG[nidx]! += eG * weight
           errBuf[nidx]! += eB * weight
@@ -345,7 +350,8 @@ export function simple2DDither(
   palette: number[][],
   blockSize: number,
   colorSpace: 'rgb' | 'oklab' = 'rgb',
-  smoothDownscale = false
+  smoothDownscale = false,
+  protectionMask?: Uint8Array
 ) {
   const { width, height } = imageData
   const data = imageData.data
@@ -361,6 +367,7 @@ export function simple2DDither(
       for (let x = 0; x < width; x++) {
         const i = (y * width + x) * 4
         const idx = y * width + x
+        if (protectionMask?.[idx]) continue
 
         const [pixL, pixA, pixB] = rgbToOklab(data[i]!, data[i + 1]!, data[i + 2]!)
         const rawL = pixL + errL[idx]!
@@ -391,12 +398,12 @@ export function simple2DDither(
         const eA = rawA - chosenA!
         const eB = rawB - chosenBlab!
 
-        if (x + 1 < width) {
+        if (x + 1 < width && !protectionMask?.[idx + 1]) {
           errL[idx + 1]! += eL * 0.5
           errA[idx + 1]! += eA * 0.5
           errB[idx + 1]! += eB * 0.5
         }
-        if (y + 1 < height) {
+        if (y + 1 < height && !protectionMask?.[idx + width]) {
           errL[idx + width]! += eL * 0.5
           errA[idx + width]! += eA * 0.5
           errB[idx + width]! += eB * 0.5
@@ -415,6 +422,7 @@ export function simple2DDither(
       for (let x = 0; x < width; x++) {
         const i = (y * width + x) * 4
         const idx = y * width + x
+        if (protectionMask?.[idx]) continue
 
         const rawR = data[i]! + errR[idx]!
         const rawG = data[i + 1]! + errG[idx]!
@@ -437,12 +445,12 @@ export function simple2DDither(
         const eG = rawG - chosenG
         const eB = rawB - chosenB
 
-        if (x + 1 < width) {
+        if (x + 1 < width && !protectionMask?.[idx + 1]) {
           errR[idx + 1]! += eR * 0.5
           errG[idx + 1]! += eG * 0.5
           errB[idx + 1]! += eB * 0.5
         }
-        if (y + 1 < height) {
+        if (y + 1 < height && !protectionMask?.[idx + width]) {
           errR[idx + width]! += eR * 0.5
           errG[idx + width]! += eG * 0.5
           errB[idx + width]! += eB * 0.5
@@ -545,7 +553,8 @@ export function riemersmaDither(
   palette: number[][],
   blockSize: number,
   colorSpace: 'rgb' | 'oklab' = 'rgb',
-  smoothDownscale = false
+  smoothDownscale = false,
+  protectionMask?: Uint8Array
 ) {
   const { width, height } = imageData
   const data = imageData.data
@@ -570,6 +579,12 @@ export function riemersmaDither(
       if (x >= width || y >= height) continue
 
       const i = (y * width + x) * 4
+      if (protectionMask?.[y * width + x]) {
+        // A protected region is a barrier in the Hilbert traversal as well.
+        errorBuf.fill(0)
+        bufHead = 0
+        continue
+      }
 
       let eL = 0, eA = 0, eB = 0
       for (let k = 0; k < N; k++) {
@@ -619,6 +634,12 @@ export function riemersmaDither(
       if (x >= width || y >= height) continue
 
       const i = (y * width + x) * 4
+      if (protectionMask?.[y * width + x]) {
+        // A protected region is a barrier in the Hilbert traversal as well.
+        errorBuf.fill(0)
+        bufHead = 0
+        continue
+      }
 
       let eR = 0, eG = 0, eB = 0
       for (let k = 0; k < N; k++) {

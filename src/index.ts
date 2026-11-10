@@ -109,6 +109,11 @@ export {
   getProcessingPresetOptions,
   PROCESSING_PRESETS,
 } from "./dither/processing";
+export { detectTextAndGraphics } from "./dither/functions/text-graphics-mask";
+export type {
+  TextAndGraphicsProtectionOptions,
+  TextAndGraphicsMask,
+} from "./dither/functions/text-graphics-mask";
 export {
   classifyCanvasImageStyle,
   classifyImageStyle,

@@ -62,6 +62,94 @@ Preserve hard line-art/text edges or smooth antialiased edge bands after ditheri
 
 **Why?** ithering can make text, icons, and line art look noisy or fuzzy. Edge handling keeps sharp content readable while still allowing smoother treatment for photographic or antialiased areas.
 
+### Experimental: Automatic text and graphics protection
+
+For flattened layouts containing both images and text, enable
+`protectTextAndGraphics`. It first finds connected, nearly uniform candidates
+of any color, then uses their spatial context to form coherent layout regions.
+Isolated candidate patches inside photos are removed; small lettering gaps and
+antialiased strokes within supported text/graphics areas are completed. Nearly
+rectangular continuous-tone components are kept as whole image/gradient regions,
+including their bright edge pixels. There is no fixed top/bottom or left/right
+template, and an image inset inside a text area is not simply filled in.
+For cutout illustrations sharing a flat page background with text, repeated
+aligned foreground shapes can recover a background rejected by the initial
+edge test. Continuous-tone foreground components retain an excluded bounding
+box, including pale details inside the object. This recovery also tolerates
+antialiasing and moderate JPEG edge artifacts; it does not identify the object
+semantically or trace its exact silhouette.
+
+Protected regions are directly quantized to the selected palette. The rest
+continues through the selected dithering algorithm. No manually drawn mask or
+external OCR service is required. The demo has a **Protect text & graphics (Experimental)** checkbox;
+the generated JSON/JavaScript config includes the option when enabled.
+
+```ts
+await ditherImage(inputCanvas, outputCanvas, {
+  palette: aitjcizeSpectra6Palette,
+  ditheringType: "errorDiffusion",
+  serpentine: true,
+  protectTextAndGraphics: true,
+});
+```
+
+This is a conservative spatial heuristic, **not semantic text recognition**.
+Large flat areas can still be selected within illustrations or photos. Text
+directly over photos, low-contrast text and textured/scanned posters remain
+ambiguous; grouping may leave an entire uncertain scan in dithering rather than
+protect scattered fragments. Quantization can merge
+foreground/background colors on a limited palette; protection does not guarantee
+text contrast or the original color. Review the result for the target display.
+
+Detection runs at output resolution **after image adjustments**. Resize before
+dithering. In a split pipeline, run `detectTextAndGraphics` on the adjusted
+canvas's `ImageData` to inspect the same mask used by `ditherCanvas`:
+
+```ts
+const detection = detectTextAndGraphics(adjustedImageData);
+// detection.mask: Uint8Array, one byte per pixel (1 = protected, 0 = dither).
+// Also returns width, height, protectedPixels and regionCount.
+```
+
+The optional object form accepts `enabled` (default `true`), `colorTolerance`
+(default `6`, per-channel seed deviation), `edgeContrast` (default `48`, minimum
+channel contrast at most boundary pixels), and `minRegionPixels` (default `12`).
+`regionGrouping` defaults to `true`; set it to `false` to inspect/reproduce the
+older pixel candidates without spatial grouping. With grouping enabled,
+`regionCount` counts the final connected protected areas; otherwise it counts
+the initial accepted flat regions.
+For example, `{ colorTolerance: 10, edgeContrast: 36 }` relaxes detection for
+imperfect sources, with a greater risk of selecting photographic detail. Results
+are scale dependent; the default is deliberately opt-in, including in Auto mode.
+
+Protected pixels neither receive nor emit diffusion error. Color-mixture,
+thickness and neighborhood checks limit how small gaps are completed; large
+textured areas and gradients remain excluded. Protection takes precedence over
+the older edge postprocessing options.
+When regions are detected, native error diffusion runs in JavaScript even with
+`processingEngine: "auto"` or `"wasm"`. `ditherItErrorDiffusion` uses the internal
+mask-aware kernel implementation instead of RgbQuant; Riemersma clears its error
+history at protected pixels. The ordinary paths are unchanged when disabled or
+when no regions are detected. `replaceColors` remains the final device encoding
+step.
+
+Run `npm run test:text-graphics` for regression tests, or
+`npm run test:text-graphics:demos` for the local demo collection (requires
+ImageMagick and `examples/sampleImages`). The latter writes original/before/after
+PNGs, masks, a browsable report and `results.json` to
+`output/selective-quantization/`. Inputs are reduced to a maximum 800-pixel edge,
+without upscaling or padding; no adjustments are applied and outputs are never
+resized. Override with `DEMO_LONG_EDGE=1200`. Mask coverage is a diagnostic, not
+an accuracy score.
+
+Run `npm run test:text-graphics:layouts` for six flattened compositions with a
+photo above/below/beside text, a framed image and a small photo inset in a text
+area. It writes a before/after report to `output/region-protection/layouts/` and
+checks photo exclusion, complete text/background protection and exact palette
+quantization. Layout rectangles are used only as evaluation ground truth, never
+as input to detection. Use `DEMO_OUTPUT_DIR=output/region-protection/demos` with
+the demo command to keep a separate full-collection report.
+
 ### Automatic processing suggestions
 
 Heuristically classify the image, score presets, and suggest dither options for the selected palette.
