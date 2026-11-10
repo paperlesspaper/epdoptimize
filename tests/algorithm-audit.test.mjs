@@ -34,3 +34,15 @@ test('Jarvis and Jarvis-Judice-Ninke use the same complete kernel',async()=>{
  const source=canvas(64,64,(x)=>[x*4,x*4,x*4]);const options={ditheringType:'errorDiffusion',palette:['#000000','#ffffff'],serpentine:true};
  assert.deepEqual(await render(source,{...options,errorDiffusionMatrix:'jarvis'}),await render(source,{...options,errorDiffusionMatrix:'jarvisJudiceNinke'}));
 });
+
+test('DitherIt reverse rows propagate the horizontal Floyd–Steinberg weight', async () => {
+  // The first row is exact black, so the reverse row starts with no vertical error.
+  // Starting at the right, gray 100 emits 100 * 7/16 to its left neighbor;
+  // that neighbor must cross the black/white threshold and become white.
+  const source = canvas(4, 2, (_x, y) => y === 0 ? [0, 0, 0] : [100, 100, 100]);
+  const data = await render(source, {
+    palette: ['#000000', '#ffffff'], ditheringType: 'ditherItErrorDiffusion',
+    serpentine: true, errorDiffusionMatrix: 'floydSteinberg',
+  });
+  assert.deepEqual(Array.from({length: 8}, (_, p) => data[p * 4]), [0, 0, 0, 0, 0, 0, 255, 0]);
+});
