@@ -45,7 +45,7 @@ function validate(value: unknown, rule: Rule, path: string): void {
   if (isRecord(rule) && isRecord(value)) {
     for (const [key, child] of Object.entries(value)) {
       if (!Object.prototype.hasOwnProperty.call(rule, key)) throw new Error(`Unknown option: ${path}.${key}`);
-      if (key === "dynamicRangeCompression" && typeof child === "boolean") continue;
+      if ((key === "dynamicRangeCompression" || key === "protectTextAndGraphics") && typeof child === "boolean") continue;
       validate(child, rule[key], `${path}.${key}`);
     }
     return;
@@ -83,6 +83,10 @@ export function parseDemoConfig(text: string, choices: Record<string, string[]>)
   }
   const dither: Record<string, Rule> = {
     ...adjustments, ...choices, serpentine: "boolean",
+    protectTextAndGraphics: {
+      enabled: "boolean", colorTolerance: "number", edgeContrast: "number",
+      minRegionPixels: "number", regionGrouping: "boolean",
+    },
     edgePreservation: { enabled: "boolean", strength: "number", threshold: "number", radius: "number" },
     edgeAntialiasing: { enabled: "boolean", strength: "number", threshold: "number", bandRadius: "number", localRadius: "number" },
   };

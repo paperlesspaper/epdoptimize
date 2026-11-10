@@ -8,6 +8,10 @@ import colorHelpers from "./functions/color-helpers";
 // import colorPaletteFromImage from "./functions/color-palette-from-image";
 import utilities from "./functions/utilities";
 import findClosestPaletteColor from "./functions/find-closest-palette-color";
+import {
+  detectTextAndGraphics,
+  type TextAndGraphicsProtectionOptions,
+} from "./functions/text-graphics-mask";
 import { applyWasmRgbErrorDiffusion } from "./wasm-error-diffusion-rgb";
 import { loadBlueNoiseTexture } from "../utils/blue-noise-texture";
 import { coverageDither } from "../utils/coverage";
@@ -181,6 +185,14 @@ export interface DitherImageOptions {
    * edge-band pixels to the two local palette colors on either side of an edge.
    */
   edgeAntialiasing?: EdgeAntialiasingOptions;
+
+  /**
+   * Automatically quantize flat text/graphics of any color without dithering.
+   * Opt-in, conservative spatial heuristic; runs after adjustments at output size.
+   * Protected pixels neither receive nor emit diffusion error. Uses JS when
+   * protection is needed; takes precedence over optional edge postprocessing.
+   */
+  protectTextAndGraphics?: boolean | TextAndGraphicsProtectionOptions;
 }
 
 export interface EdgePreservationOptions {
@@ -534,6 +546,19 @@ const ditherImageData = async (
   const edgeSourceData = shouldApplyEdgeHandling(options, colorPalette)
     ? new Uint8ClampedArray(image.data)
     : null;
+  const protectionOptions = options.protectTextAndGraphics;
+  const detected = colorPalette.length && protectionOptions &&
+    (protectionOptions === true || protectionOptions.enabled !== false)
+    ? detectTextAndGraphics(image, protectionOptions === true ? {} : protectionOptions)
+    : null;
+  const protection = detected?.protectedPixels ? {
+    mask: detected.mask,
+    quantized: getQuantizedData(image.data, colorPalette, options.colorMatching, detected.mask),
+  } : undefined;
+  const finish = () => {
+    applyEdgeHandling(image, options, colorPalette, edgeSourceData);
+    if (protection) applyTextAndGraphicsProtection(image, protection);
+  };
 
   function setPixel(pixelIndex: number, pixel: RGBA) {
     image.data[pixelIndex] = pixel[0];
@@ -545,8 +570,9 @@ const ditherImageData = async (
   if (isUtilsDitheringType(options.ditheringType)) {
     // The mask is a file, so it has to be in hand before the synchronous dither.
     if (needsBlueNoise(options.ditheringType)) await loadBlueNoiseTexture();
-    applyUtilsDithering(image, options, colorPalette);
-    applyEdgeHandling(image, options, colorPalette, edgeSourceData);
+    if (protection) applyTextAndGraphicsProtection(image, protection);
+    applyUtilsDithering(image, options, colorPalette, protection?.mask);
+    finish();
     return;
   }
 
@@ -569,7 +595,7 @@ const ditherImageData = async (
       (x, y) => (thresholdMap[y % rows][x % columns] + 0.5) / cells
     );
     if (covered) {
-      applyEdgeHandling(image, options, colorPalette, edgeSourceData);
+      finish();
       return;
     }
   }
@@ -647,6 +673,7 @@ const ditherImageData = async (
   if (options.ditheringType === "errorDiffusion") {
     const diffusionMap = getDiffusionMap(options.errorDiffusionMatrix);
     const usedWasm =
+      !protection &&
       shouldUseWasmErrorDiffusion(
         options.processingEngine,
         options.colorMatching
@@ -666,12 +693,29 @@ const ditherImageData = async (
         colorPalette,
         diffusionMap,
         options.colorMatching,
-        options.serpentine
+        options.serpentine,
+        protection
       );
     }
   }
 
-  applyEdgeHandling(image, options, colorPalette, edgeSourceData);
+  finish();
+};
+
+interface TextAndGraphicsProtection {
+  mask: Uint8Array;
+  quantized: Uint8ClampedArray;
+}
+
+const applyTextAndGraphicsProtection = (
+  image: ImageDataLike,
+  protection: TextAndGraphicsProtection,
+) => {
+  for (let p = 0; p < protection.mask.length; p++) {
+    if (!protection.mask[p]) continue;
+    const i = p * 4;
+    for (let c = 0; c < 4; c++) image.data[i + c] = protection.quantized[i + c];
+  }
 };
 
 const applyImageAdjustments = async (
@@ -821,7 +865,8 @@ type UtilsColorSpace = "rgb" | "oklab";
 const applyUtilsDithering = (
   image: ImageDataLike,
   options: DitherImageOptions & typeof defaultOptions,
-  colorPalette: RGB[]
+  colorPalette: RGB[],
+  protectionMask?: Uint8Array,
 ) => {
   const context = createUtilsDitherContext(image);
   const imageData = image as unknown as ImageData;
@@ -851,7 +896,15 @@ const applyUtilsDithering = (
     options.ditheringType === "simple2D" ||
     options.ditheringType === "ditherItSimple2D"
   ) {
-    simple2DDither(context, imageData, colorPalette, blockSize, colorSpace);
+    simple2DDither(
+      context,
+      imageData,
+      colorPalette,
+      blockSize,
+      colorSpace,
+      false,
+      protectionMask
+    );
     return;
   }
 
@@ -859,11 +912,19 @@ const applyUtilsDithering = (
     options.ditheringType === "riemersma" ||
     options.ditheringType === "ditherItRiemersma"
   ) {
-    riemersmaDither(context, imageData, colorPalette, blockSize, colorSpace);
+    riemersmaDither(
+      context,
+      imageData,
+      colorPalette,
+      blockSize,
+      colorSpace,
+      false,
+      protectionMask
+    );
     return;
   }
 
-  if (colorSpace === "rgb") {
+  if (colorSpace === "rgb" && !protectionMask) {
     rgbQuantDiffusionDither(
       context,
       imageData,
@@ -882,7 +943,9 @@ const applyUtilsDithering = (
     blockSize,
     getUtilsKernelName(options.errorDiffusionMatrix),
     options.serpentine,
-    colorSpace
+    colorSpace,
+    false,
+    protectionMask
   );
 };
 
@@ -1040,7 +1103,8 @@ const applyErrorDiffusion = (
   colorPalette: RGB[],
   diffusionMap: DiffusionMap,
   colorMatching: ColorMatchingMode,
-  serpentine: boolean
+  serpentine: boolean,
+  protection?: TextAndGraphicsProtection,
 ) => {
   const data = image.data;
   const matcher = createPaletteMatcher(colorPalette, colorMatching);
@@ -1063,6 +1127,10 @@ const applyErrorDiffusion = (
 
     for (let x = xStart; x !== xEnd; x += xStep) {
       const currentPixel = (y * width + x) * 4;
+      if (protection?.mask[currentPixel / 4]) {
+        for (let c = 0; c < 4; c++) data[currentPixel + c] = protection.quantized[currentPixel + c];
+        continue;
+      }
       const sourceR = data[currentPixel];
       const sourceG = data[currentPixel + 1];
       const sourceB = data[currentPixel + 2];
@@ -1109,6 +1177,7 @@ const applyErrorDiffusion = (
         const ny = y + diffusion.offset[1];
         if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
 
+        if (protection?.mask[ny * width + nx]) continue;
         const factor = diffusion.factor;
         const targetError = (ny % errorRows) * rowLength + nx * 3;
         errors[targetError] += errorR * factor;
@@ -1279,12 +1348,14 @@ const dilateMaskAt = (
 const getQuantizedData = (
   sourceData: Uint8ClampedArray,
   colorPalette: RGB[],
-  colorMatching: ColorMatchingMode
+  colorMatching: ColorMatchingMode,
+  mask?: Uint8Array,
 ) => {
   const quantized = new Uint8ClampedArray(sourceData);
   const matcher = createPaletteMatcher(colorPalette, colorMatching);
 
   for (let pixel = 0; pixel < quantized.length; pixel += 4) {
+    if (mask && !mask[pixel / 4]) continue;
     if (sourceData[pixel + 3] <= 16) continue;
 
     const r = sourceData[pixel];

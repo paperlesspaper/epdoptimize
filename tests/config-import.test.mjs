@@ -54,3 +54,13 @@ test('editing one control retains invisible settings and other processing stages
   assert.deepEqual(mergeControlChanges(original,before,before),original);
   assert.equal(original.clarity.radius,3);
 });
+
+test('text protection configs round-trip boolean and advanced options', () => {
+  for (const protectTextAndGraphics of [true, false,
+    { enabled: true, colorTolerance: 10, edgeContrast: 36, minRegionPixels: 8, regionGrouping: false }]) {
+    const value = { ...config, canvasDitherOptions: { protectTextAndGraphics } };
+    assert.deepEqual(parse(value), value);
+  }
+  for (const protectTextAndGraphics of ['true', null, [], { enabled: 'false' }, { unknown: 1 }])
+    assert.throws(() => parse({ ...config, canvasDitherOptions: { protectTextAndGraphics } }));
+});

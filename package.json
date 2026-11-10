@@ -38,7 +38,10 @@
     "release:patch": "npm version patch && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
     "release:minor": "npm version minor && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
     "release:major": "npm version major && git push origin main --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
-    "test": "npm run build && node --experimental-strip-types --test tests/*.test.mjs"
+    "test": "npm run build && node --experimental-strip-types --test tests/*.test.mjs",
+    "test:text-graphics": "npm run build && node --test tests/text-graphics-protection.test.mjs",
+    "test:text-graphics:demos": "npm run build && node scripts/test-text-graphics-demos.mjs",
+    "test:text-graphics:layouts": "npm run build && node scripts/test-region-layouts.mjs"
   },
   "files": [
     "dist"
