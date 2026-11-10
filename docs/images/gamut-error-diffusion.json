@@ -1,0 +1,49 @@
+{
+  "width": 320,
+  "height": 150,
+  "changedPixels": {
+    "source": 0,
+    "before": 1462,
+    "after": 0
+  },
+  "options": {
+    "palette": [
+      {
+        "name": "black",
+        "color": "#020202",
+        "deviceColor": "#000000"
+      },
+      {
+        "name": "white",
+        "color": "#BEC8C8",
+        "deviceColor": "#FFFFFF"
+      },
+      {
+        "name": "blue",
+        "color": "#05409E",
+        "deviceColor": "#0000FF"
+      },
+      {
+        "name": "green",
+        "color": "#27663C",
+        "deviceColor": "#00FF00"
+      },
+      {
+        "name": "red",
+        "color": "#871300",
+        "deviceColor": "#FF0000"
+      },
+      {
+        "name": "yellow",
+        "color": "#CDCA00",
+        "deviceColor": "#FFFF00"
+      }
+    ],
+    "ditheringType": "errorDiffusion",
+    "errorDiffusionMatrix": "sierra3",
+    "serpentine": true,
+    "colorMatching": "lab",
+    "processingEngine": "js",
+    "protectTextAndGraphics": false
+  }
+}

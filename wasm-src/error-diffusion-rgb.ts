@@ -11,11 +11,14 @@ export function ditherRgbErrorDiffusion(
   matrixLength: i32,
   serpentine: i32,
   errorsPtr: i32,
-  errorRows: i32
+  errorRows: i32,
+  sourcePtr: i32,
+  firstRow: i32,
+  endRow: i32
 ): void {
   if (paletteLength <= 0) return;
 
-  for (let y: i32 = 0; y < height; y += 1) {
+  for (let y: i32 = firstRow; y < endRow; y += 1) {
     const errorRowPtr = errorsPtr + (y % errorRows) * width * 24;
     const reverse = serpentine != 0 && (y & 1) == 1;
     const xStart: i32 = reverse ? width - 1 : 0;
@@ -26,9 +29,15 @@ export function ditherRgbErrorDiffusion(
       const currentPixel = (y * width + x) << 2;
       const currentPtr = dataPtr + currentPixel;
       const errorPtr = errorRowPtr + x * 24;
-      const oldR = <f64>load<u8>(currentPtr) + load<f64>(errorPtr);
-      const oldG = <f64>load<u8>(currentPtr + 1) + load<f64>(errorPtr + 8);
-      const oldB = <f64>load<u8>(currentPtr + 2) + load<f64>(errorPtr + 16);
+      // The host supplies one projected source row in Float64, shared with JS.
+      // A zero pointer retains the raw-byte path for unsupported palettes.
+      const projectedPtr = sourcePtr + x * 24;
+      const sourceR = sourcePtr != 0 ? load<f64>(projectedPtr) : <f64>load<u8>(currentPtr);
+      const sourceG = sourcePtr != 0 ? load<f64>(projectedPtr + 8) : <f64>load<u8>(currentPtr + 1);
+      const sourceB = sourcePtr != 0 ? load<f64>(projectedPtr + 16) : <f64>load<u8>(currentPtr + 2);
+      const oldR = sourceR + load<f64>(errorPtr);
+      const oldG = sourceG + load<f64>(errorPtr + 8);
+      const oldB = sourceB + load<f64>(errorPtr + 16);
 
       let closestIndex: i32 = 0;
       let closestDistance = f64.MAX_VALUE;

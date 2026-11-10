@@ -12,6 +12,7 @@ import {
   detectTextAndGraphics,
   type TextAndGraphicsProtectionOptions,
 } from "./functions/text-graphics-mask";
+import { createPaletteGamutProjector } from "./functions/palette-gamut";
 import { applyWasmRgbErrorDiffusion } from "./wasm-error-diffusion-rgb";
 import { loadBlueNoiseTexture } from "../utils/blue-noise-texture";
 import { coverageDither } from "../utils/coverage";
@@ -1108,6 +1109,8 @@ const applyErrorDiffusion = (
 ) => {
   const data = image.data;
   const matcher = createPaletteMatcher(colorPalette, colorMatching);
+  const project = createPaletteGamutProjector(colorPalette, width * height);
+  const projected = new Float64Array(3);
   // Keep signed, fractional errors separate from the byte output. Clipping an
   // intermediate channel loses error (notably negative red in cyan regions).
   // Only the current and upcoming kernel rows are needed.
@@ -1131,9 +1134,13 @@ const applyErrorDiffusion = (
         for (let c = 0; c < 4; c++) data[currentPixel + c] = protection.quantized[currentPixel + c];
         continue;
       }
-      const sourceR = data[currentPixel];
-      const sourceG = data[currentPixel + 1];
-      const sourceB = data[currentPixel + 2];
+      let sourceR = data[currentPixel];
+      let sourceG = data[currentPixel + 1];
+      let sourceB = data[currentPixel + 2];
+      if (project) {
+        project(sourceR, sourceG, sourceB, projected);
+        [sourceR, sourceG, sourceB] = projected;
+      }
       const errorPixel = errorRow + x * 3;
       const oldR = sourceR + errors[errorPixel];
       const oldG = sourceG + errors[errorPixel + 1];
