@@ -20,9 +20,9 @@ You can order our Spectra 6 eInk picture frame [here](https://paperlesspaper.de/
 
 To check how solid colors and dithered mixtures appear on real panels, we photograph them beside a Spyder Checkr 24 reference card with fixed camera settings. The bench below has a 13.3-inch panel on the left and a 7.3-inch panel on the right; these setup photos show earlier test images.
 
-| Panels and reference card | Lighting and cameras |
+| Panels and reference card | Camera and testbench |
 | --- | --- |
-| ![DKE panels beside a Spyder Checkr 24, with cameras and the OpenPaper testbench](docs/images/setup/bench-overview.jpg) | ![Lighting and tripod-mounted cameras facing the panels and reference card](docs/images/setup/lighting-and-cameras.jpg) |
+| ![DKE panels beside a Spyder Checkr 24, with cameras and the OpenPaper testbench](docs/images/setup/bench-overview.jpg) | ![Camera facing the DKE panels and reference card, with the OpenPaper testbench and USB connections in front](docs/images/setup/camera-and-testbench.jpg) |
 
 The [panel measurement documentation](https://docs.paperlesspaper.de/panels/overview) includes measured swatches for six solid colors and 45 mixtures per panel, original captures, native test patterns, and JSON/CSV downloads. See the results for the [DKE 7-inch panel](https://docs.paperlesspaper.de/panels/dke-7-inch) and [DKE 13.3-inch panel](https://docs.paperlesspaper.de/panels/dke-13-3-inch).
 
