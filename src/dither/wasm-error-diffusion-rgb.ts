@@ -15,12 +15,14 @@ interface WasmExports {
     height: number,
     matrixPtr: number,
     matrixLength: number,
-    serpentine: number
+    serpentine: number,
+    errorsPtr: number,
+    errorRows: number
   ) => void;
 }
 
 const WASM_BASE64 =
-  "AGFzbQEAAAABDAFgCH9/f39/f39/AAMCAQAFAwEAAAckAhdkaXRoZXJSZ2JFcnJvckRpZmZ1c2lvbgAABm1lbW9yeQIACtAFAc0FAgx/BnwgAkEATARADwsDQCAEIA1KBEAgB0EARyIJBEAgDUEBcSEJC0F/IAMgCRshEkF/QQEgCRshEyADQQFrQQAgCRshDgNAIA4gEkcEQCADIA1sIA5qQQJ0IABqIgwtAAAhDyAMLQABIRAgDC0AAiERQQAhCET////////vfyEVQQAhCwNAIAIgC0oEQCABIAtBA2xqIgotAAC4IA+4oSIUIBSiIAotAAG4IBC4oSIUIBSioCAKLQACuCARuKEiFCAUoqCfIhQgFWMEQCAUIRUgCyEICyALQQFqIQsMAQsLIAEgCEEDbGoiCC0AACELIAgtAAEhCiAILQACIQggDCALOgAAIAwgCjoAASAMIAg6AAIgDEH/AToAAyAPuCALuKEhGCAQuCAKuKEhFiARuCAIuKEhF0EAIQgDQCAGIAhKBEAgBSAIQRhsaiIMKwMA/AIhCiAMKwMQIRlBACAKayAKIAkbIA5qIgtBAEggAyALTHIgDCsDCPwCIA1qIgpBAEhyIAQgCkxyRQRAIAAgAyAKbCALakECdGoiCi0AALggGCAZoqAhFSAKAn9BACAVRAAAAAAAAAAAYw0AGkH/ASAVRAAAAAAA4G9AZA0AGiAVmyIUIBREAAAAAAAA8L+gIBREAAAAAAAA4L+gIBVlG/wDCzoAACAKAn9BACAKLQABuCAWIBmioCIVRAAAAAAAAAAAYw0AGkH/ASAVRAAAAAAA4G9AZA0AGiAVmyIUIBREAAAAAAAA8L+gIBREAAAAAAAA4L+gIBVlG/wDCzoAASAKAn9BACAKLQACuCAXIBmioCIVRAAAAAAAAAAAYw0AGkH/ASAVRAAAAAAA4G9AZA0AGiAVmyIUIBREAAAAAAAA8L+gIBREAAAAAAAA4L+gIBVlG/wDCzoAAgsgCEEBaiEIDAELCyAOIBNqIQ4MAQsLIA1BAWohDQwBCwsL";
+  "AGFzbQEAAAABDgFgCn9/f39/f39/f38AAwIBAAUDAQAAByQCF2RpdGhlclJnYkVycm9yRGlmZnVzaW9uAAAGbWVtb3J5AgAK1AQB0QQCCn8FfCACQQBMBEAPCwNAIAQgE0oEQCAIIBMgCW8gA2xBGGxqIREgB0EARyILBEAgE0EBcSELC0F/IAMgCxshEEF/QQEgCxshDyADQQFrQQAgCxshEgNAIBAgEkcEQCADIBNsIBJqQQJ0IABqIg4tAAC4IBEgEkEYbGoiCisDAKAhFiAOLQABuCAKKwMIoCEYIA4tAAK4IAorAxCgIRdBACEKRP///////+9/IRVBACENA0AgAiANSgRAIAEgDUEDbGoiDC0AALggFqEiFCAUoiAMLQABuCAYoSIUIBSioCAMLQACuCAXoSIUIBSioJ8iFCAVYwRAIBQhFSANIQoLIA1BAWohDQwBCwsgASAKQQNsaiIKLQAAIQ0gCi0AASEMIAotAAIhCiAOIA06AAAgDiAMOgABIA4gCjoAAiAOQf8BOgADIBYgDbihIhREAAAAAADgb0AgFJkgGCAMuKEiFpkgFyAKuKEiFZmlpUQAAAAAAOBvQKWjIhSiIRcgFiAUoiEWIBUgFKIhFUEAIQoDQCAGIApKBEAgBSAKQRhsaiIOKwMA/AIhDCAOKwMQIRRBACAMayAMIAsbIBJqIg1BAEggAyANTHIgDisDCPwCIBNqIgxBAEhyIAQgDExyRQRAIAggDCAJbyADbCANakEYbGoiDCAMKwMAIBcgFKKgOQMAIAwgDCsDCCAWIBSioDkDCCAMIAwrAxAgFSAUoqA5AxALIApBAWohCgwBCwsgDyASaiESDAELCyARQQAgA0EYbPwLACATQQFqIRMMAQsLCw==";
 
 let exportsPromise: Promise<WasmExports | null> | null = null;
 
@@ -81,7 +83,13 @@ export const applyWasmRgbErrorDiffusion = async (
   const dataPtr = 0;
   const palettePtr = align(dataPtr + dataByteLength, 8);
   const matrixPtr = align(palettePtr + paletteByteLength, 8);
-  const totalBytes = matrixPtr + matrixByteLength;
+  const errorsPtr = matrixPtr + matrixByteLength;
+  const errorRows = Math.min(
+    image.height,
+    1 + Math.max(0, ...diffusionMap.map((d) => d.offset[1]))
+  );
+  const errorLength = image.width * errorRows * 3;
+  const totalBytes = errorsPtr + errorLength * 8;
 
   ensureMemory(memory, totalBytes);
 
@@ -97,6 +105,8 @@ export const applyWasmRgbErrorDiffusion = async (
   }
 
   const floats = new Float64Array(memory.buffer);
+  // The module is reused across calls: never retain errors from another image.
+  floats.fill(0, errorsPtr / 8, errorsPtr / 8 + errorLength);
   let matrixIndex = matrixPtr / 8;
   for (const diffusion of diffusionMap) {
     floats[matrixIndex] = diffusion.offset[0];
@@ -113,7 +123,9 @@ export const applyWasmRgbErrorDiffusion = async (
     image.height,
     matrixPtr,
     diffusionMap.length,
-    serpentine ? 1 : 0
+    serpentine ? 1 : 0,
+    errorsPtr,
+    errorRows
   );
 
   image.data.set(bytes.subarray(dataPtr, dataPtr + dataByteLength));

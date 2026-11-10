@@ -1,12 +1,6 @@
 // Experimental RGB-only error diffusion kernel.
 // This mirrors the JavaScript RGB palette matching path byte-for-byte.
 
-function clampByte(value: f64): u8 {
-  if (value < 0) return 0;
-  if (value > 255) return 255;
-  return <u8>Math.round(value);
-}
-
 export function ditherRgbErrorDiffusion(
   dataPtr: i32,
   palettePtr: i32,
@@ -15,11 +9,14 @@ export function ditherRgbErrorDiffusion(
   height: i32,
   matrixPtr: i32,
   matrixLength: i32,
-  serpentine: i32
+  serpentine: i32,
+  errorsPtr: i32,
+  errorRows: i32
 ): void {
   if (paletteLength <= 0) return;
 
   for (let y: i32 = 0; y < height; y += 1) {
+    const errorRowPtr = errorsPtr + (y % errorRows) * width * 24;
     const reverse = serpentine != 0 && (y & 1) == 1;
     const xStart: i32 = reverse ? width - 1 : 0;
     const xEnd: i32 = reverse ? -1 : width;
@@ -28,9 +25,10 @@ export function ditherRgbErrorDiffusion(
     for (let x: i32 = xStart; x != xEnd; x += xStep) {
       const currentPixel = (y * width + x) << 2;
       const currentPtr = dataPtr + currentPixel;
-      const oldR = load<u8>(currentPtr);
-      const oldG = load<u8>(currentPtr + 1);
-      const oldB = load<u8>(currentPtr + 2);
+      const errorPtr = errorRowPtr + x * 24;
+      const oldR = <f64>load<u8>(currentPtr) + load<f64>(errorPtr);
+      const oldG = <f64>load<u8>(currentPtr + 1) + load<f64>(errorPtr + 8);
+      const oldB = <f64>load<u8>(currentPtr + 2) + load<f64>(errorPtr + 16);
 
       let closestIndex: i32 = 0;
       let closestDistance = f64.MAX_VALUE;
@@ -58,9 +56,17 @@ export function ditherRgbErrorDiffusion(
       store<u8>(currentPtr + 2, newB);
       store<u8>(currentPtr + 3, 255);
 
-      const errorR = <f64>oldR - <f64>newR;
-      const errorG = <f64>oldG - <f64>newG;
-      const errorB = <f64>oldB - <f64>newB;
+      // Match the JS vector bound without changing the residual direction.
+      const residualR = oldR - <f64>newR;
+      const residualG = oldG - <f64>newG;
+      const residualB = oldB - <f64>newB;
+      const errorScale = 255.0 / Math.max(
+        255.0,
+        Math.max(Math.abs(residualR), Math.max(Math.abs(residualG), Math.abs(residualB)))
+      );
+      const errorR = residualR * errorScale;
+      const errorG = residualG * errorScale;
+      const errorB = residualB * errorScale;
 
       for (let index: i32 = 0; index < matrixLength; index += 1) {
         const diffusionPtr = matrixPtr + index * 24;
@@ -73,20 +79,21 @@ export function ditherRgbErrorDiffusion(
 
         if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
 
-        const pixelPtr = dataPtr + ((ny * width + nx) << 2);
-        store<u8>(
+        const pixelPtr = errorsPtr + ((ny % errorRows) * width + nx) * 24;
+        store<f64>(
           pixelPtr,
-          clampByte(<f64>load<u8>(pixelPtr) + errorR * factor)
+          load<f64>(pixelPtr) + errorR * factor
         );
-        store<u8>(
-          pixelPtr + 1,
-          clampByte(<f64>load<u8>(pixelPtr + 1) + errorG * factor)
+        store<f64>(
+          pixelPtr + 8,
+          load<f64>(pixelPtr + 8) + errorG * factor
         );
-        store<u8>(
-          pixelPtr + 2,
-          clampByte(<f64>load<u8>(pixelPtr + 2) + errorB * factor)
+        store<f64>(
+          pixelPtr + 16,
+          load<f64>(pixelPtr + 16) + errorB * factor
         );
       }
     }
+    memory.fill(errorRowPtr, 0, width * 24);
   }
 }
