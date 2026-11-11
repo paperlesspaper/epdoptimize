@@ -1,6 +1,6 @@
 {
   "name": "epdoptimize",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Efficiently optimize EPD (Electronic Paper Display) images",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
