@@ -1,3 +1,4 @@
+import { createPaletteGamutProjector } from "./functions/palette-gamut";
 import type { ImageDataLike, RGB } from "./processing";
 
 interface DiffusionEntry {
@@ -17,12 +18,15 @@ interface WasmExports {
     matrixLength: number,
     serpentine: number,
     errorsPtr: number,
-    errorRows: number
+    errorRows: number,
+    sourcePtr: number,
+    firstRow: number,
+    endRow: number
   ) => void;
 }
 
 const WASM_BASE64 =
-  "AGFzbQEAAAABDgFgCn9/f39/f39/f38AAwIBAAUDAQAAByQCF2RpdGhlclJnYkVycm9yRGlmZnVzaW9uAAAGbWVtb3J5AgAK1AQB0QQCCn8FfCACQQBMBEAPCwNAIAQgE0oEQCAIIBMgCW8gA2xBGGxqIREgB0EARyILBEAgE0EBcSELC0F/IAMgCxshEEF/QQEgCxshDyADQQFrQQAgCxshEgNAIBAgEkcEQCADIBNsIBJqQQJ0IABqIg4tAAC4IBEgEkEYbGoiCisDAKAhFiAOLQABuCAKKwMIoCEYIA4tAAK4IAorAxCgIRdBACEKRP///////+9/IRVBACENA0AgAiANSgRAIAEgDUEDbGoiDC0AALggFqEiFCAUoiAMLQABuCAYoSIUIBSioCAMLQACuCAXoSIUIBSioJ8iFCAVYwRAIBQhFSANIQoLIA1BAWohDQwBCwsgASAKQQNsaiIKLQAAIQ0gCi0AASEMIAotAAIhCiAOIA06AAAgDiAMOgABIA4gCjoAAiAOQf8BOgADIBYgDbihIhREAAAAAADgb0AgFJkgGCAMuKEiFpkgFyAKuKEiFZmlpUQAAAAAAOBvQKWjIhSiIRcgFiAUoiEWIBUgFKIhFUEAIQoDQCAGIApKBEAgBSAKQRhsaiIOKwMA/AIhDCAOKwMQIRRBACAMayAMIAsbIBJqIg1BAEggAyANTHIgDisDCPwCIBNqIgxBAEhyIAQgDExyRQRAIAggDCAJbyADbCANakEYbGoiDCAMKwMAIBcgFKKgOQMAIAwgDCsDCCAWIBSioDkDCCAMIAwrAxAgFSAUoqA5AxALIApBAWohCgwBCwsgDyASaiESDAELCyARQQAgA0EYbPwLACATQQFqIRMMAQsLCw==";
+  "AGFzbQEAAAABEQFgDX9/f39/f39/f39/f38AAwIBAAUDAQAAByQCF2RpdGhlclJnYkVycm9yRGlmZnVzaW9uAAAGbWVtb3J5AgAKggUB/wQCCX8FfCACQQBMBEAPCwNAIAsgDEgEQCAIIAsgCW8gA2xBGGxqIRQgB0EARyIOBEAgC0EBcSEOC0F/IAMgDhshE0F/QQEgDhshEiADQQFrQQAgDhshFQNAIBMgFUcEQCADIAtsIBVqQQJ0IABqIREgFUEYbCINIBRqIQ8gCiANaiENIAoEfCANKwMABSARLQAAuAsgDysDAKAhGCAKBHwgDSsDCAUgES0AAbgLIA8rAwigIRogCgR8IA0rAxAFIBEtAAK4CyAPKwMQoCEZQQAhDUT////////vfyEXQQAhEANAIAIgEEoEQCABIBBBA2xqIg8tAAC4IBihIhYgFqIgDy0AAbggGqEiFiAWoqAgDy0AArggGaEiFiAWoqCfIhYgF2MEQCAWIRcgECENCyAQQQFqIRAMAQsLIAEgDUEDbGoiDS0AACEQIA0tAAEhDyANLQACIQ0gESAQOgAAIBEgDzoAASARIA06AAIgEUH/AToAAyAYIBC4oSIWRAAAAAAA4G9AIBaZIBogD7ihIhiZIBkgDbihIheZpaVEAAAAAADgb0CloyIWoiEZIBggFqIhGCAXIBaiIRdBACENA0AgBiANSgRAIAUgDUEYbGoiESsDAPwCIQ8gESsDECEWQQAgD2sgDyAOGyAVaiIQQQBIIAMgEExyIBErAwj8AiALaiIPQQBIciAEIA9MckUEQCAIIA8gCW8gA2wgEGpBGGxqIg8gDysDACAZIBaioDkDACAPIA8rAwggGCAWoqA5AwggDyAPKwMQIBcgFqKgOQMQCyANQQFqIQ0MAQsLIBIgFWohFQwBCwsgFEEAIANBGGz8CwAgC0EBaiELDAELCws=";
 
 let exportsPromise: Promise<WasmExports | null> | null = null;
 
@@ -89,7 +93,10 @@ export const applyWasmRgbErrorDiffusion = async (
     1 + Math.max(0, ...diffusionMap.map((d) => d.offset[1]))
   );
   const errorLength = image.width * errorRows * 3;
-  const totalBytes = errorsPtr + errorLength * 8;
+  const project = createPaletteGamutProjector(colorPalette, image.width * image.height);
+  const sourcePtr = errorsPtr + errorLength * 8;
+  // One source row rather than an additional image-sized Float64 allocation.
+  const totalBytes = sourcePtr + (project ? image.width * 3 * 8 : 0);
 
   ensureMemory(memory, totalBytes);
 
@@ -115,18 +122,23 @@ export const applyWasmRgbErrorDiffusion = async (
     matrixIndex += 3;
   }
 
-  ditherRgbErrorDiffusion(
-    dataPtr,
-    palettePtr,
-    colorPalette.length,
-    image.width,
-    image.height,
-    matrixPtr,
-    diffusionMap.length,
-    serpentine ? 1 : 0,
-    errorsPtr,
-    errorRows
-  );
+  const run = (firstRow: number, endRow: number, projectedPtr: number) =>
+    ditherRgbErrorDiffusion(
+      dataPtr, palettePtr, colorPalette.length, image.width, image.height,
+      matrixPtr, diffusionMap.length, serpentine ? 1 : 0, errorsPtr, errorRows,
+      projectedPtr, firstRow, endRow
+    );
+  if (project) {
+    for (let y = 0; y < image.height; y++) {
+      for (let x = 0; x < image.width; x++) {
+        const p = (y * image.width + x) * 4;
+        project(image.data[p], image.data[p + 1], image.data[p + 2], floats, sourcePtr / 8 + x * 3);
+      }
+      run(y, y + 1, sourcePtr);
+    }
+  } else {
+    run(0, image.height, 0);
+  }
 
   image.data.set(bytes.subarray(dataPtr, dataPtr + dataByteLength));
   return true;

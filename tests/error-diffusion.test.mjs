@@ -89,7 +89,7 @@ test("embedded WASM executes the float kernel without relying on JS fallback", a
   // White is initially nearest. Its negative red error must reach pixel two.
   data.set([0, 0, 0, 255, 255, 255, 0, 0, 255, 0, 255, 0], 8);
   new Float64Array(memory.buffer, 24, 3).set([1, 0, 1]);
-  ditherRgbErrorDiffusion(0, 8, 4, 2, 1, 24, 1, 0, 48, 1);
+  ditherRgbErrorDiffusion(0, 8, 4, 2, 1, 24, 1, 0, 48, 1, 0, 0, 1);
   assert.deepEqual([...data.slice(0, 8)], [255, 255, 255, 255, 0, 0, 255, 255]);
 });
 
@@ -107,3 +107,52 @@ for (const colorMatching of ["lab", "chroma"]) {
     assert.ok(nonblack > 4096 * 0.4);
   });
 }
+
+for (const processingEngine of ["js", "wasm"]) {
+  for (const colorMatching of processingEngine === "wasm" ? ["rgb"] : ["rgb", "lab", "chroma"]) {
+    test(`${processingEngine}/${colorMatching}: calibrated hard edges survive without text protection`, async () => {
+      for (const [ink, paper] of [[0,255],[1,218]]) {
+        const source = canvas(96,64,(x,y) => {
+          const stroke = y % 16 === 8 || (y % 16 >= 3 && y % 16 <= 12 && x % 12 >= 4 && x % 12 <= 6);
+          return stroke ? [ink,ink,ink] : [paper,paper,paper];
+        });
+        for (const serpentine of [false,true]) {
+          const output = await render(source, { palette:aitjcizeSpectra6Palette, processingEngine,
+            colorMatching, errorDiffusionMatrix:"sierra3", serpentine, protectTextAndGraphics:false });
+          for(let i=0;i<output.length;i+=4) assert.deepEqual([...output.slice(i,i+3)],
+            source.data[i] === ink ? [2,2,2] : [190,200,200]);
+        }
+      }
+    });
+  }
+}
+
+test("WASM row projection matches JS for degenerate and larger fallback palettes", async () => {
+  const palettes = [
+    ["#123456"], ["#123456","#123456"], ["#141414","#c8c8c8"],
+    ["#000000","#ff0000","#00ff00"], ["#000000","#ff0000","#00ff00","#ffff00"],
+    Array.from({length:16},(_,i)=>"#"+(i*17).toString(16).padStart(2,"0").repeat(3)),
+    [...idealPalette,"#102030","#405060","#708090"],
+  ];
+  for(const [width,height] of [[1,1],[1,13],[13,1],[29,31],[0,0]]) {
+    const source=canvas(width,height,(x,y)=>[(x*19+y*77)%256,(x*89+y*23)%256,(x*11+y*67)%256]);
+    for(const palette of palettes) {
+      const options={palette,errorDiffusionMatrix:"sierra3",serpentine:true,protectTextAndGraphics:false};
+      assert.deepEqual(await render(source,{...options,processingEngine:"wasm"}),await render(source,{...options,processingEngine:"js"}));
+    }
+  }
+});
+
+test("embedded WASM consumes projected fractional rows and keeps errors between calls", async () => {
+  const wrapper=await readFile(new URL("../src/dither/wasm-error-diffusion-rgb.ts",import.meta.url),"utf8");
+  const {instance}=await WebAssembly.instantiate(Buffer.from(wrapper.match(/const WASM_BASE64 =\s*"([^"]+)"/)[1],"base64"),{});
+  const {memory,ditherRgbErrorDiffusion}=instance.exports;memory.grow(1);
+  const bytes=new Uint8Array(memory.buffer),floats=new Float64Array(memory.buffer);
+  bytes.set([0,0,0,255,0,0,0,255]); // Source bytes differ deliberately from projected values.
+  bytes.set([0,0,0,255,255,255],8);
+  floats.set([0,1,1],2); // Propagate the entire residual into the next row.
+  floats.set([127.5,127.5,127.5],11);
+  ditherRgbErrorDiffusion(0,8,2,1,2,16,1,0,40,2,88,0,1);
+  ditherRgbErrorDiffusion(0,8,2,1,2,16,1,0,40,2,88,1,2);
+  assert.deepEqual([...bytes.slice(0,8)],[0,0,0,255,255,255,255,255]);
+});

@@ -74,6 +74,42 @@ Preserve hard line-art/text edges or smooth antialiased edge bands after ditheri
 
 **Why?** ithering can make text, icons, and line art look noisy or fuzzy. Edge handling keeps sharp content readable while still allowing smoother treatment for photographic or antialiased areas.
 
+### Gamut-aware native error diffusion
+
+Native `ditheringType: "errorDiffusion"` projects each adjusted source color onto
+its palette's reachable RGB mixture gamut before adding the accumulated
+floating-point error. This avoids repeatedly diffusing an impossible difference
+such as screen white (`#FFFFFF`) versus calibrated display white (`#BEC8C8`).
+Reachable intermediate colors remain intermediate colors: cyan can still use a
+blue/green/white mixture rather than collapsing to white.
+
+This runs without text detection, masks, or `protectTextAndGraphics`. It applies
+to photos as well as graphics, so it can change photo hues, highlights, and raster
+patterns. It does not guarantee exact preservation of arbitrary colored or
+antialiased text, especially beside photographic content. The optional spatial
+text/graphics protection below remains available for that separate purpose.
+
+Projection supports palettes with up to eight distinct colors, including
+one-color, collinear and planar palettes. Longer collinear palettes (such as
+16-level grayscale) are supported too; larger non-collinear palettes keep the
+previous signed-error path. Projection uses RGB code values, consistent with the
+native diffusion residuals; it is not a physical linear-light pigment model.
+Other dithering modes and DitherIt-backed aliases are unchanged.
+
+JavaScript and RGB WASM use the same Float64 projection. The WASM host streams one
+projected row at a time, retaining the bounded row error buffer and an exact-key
+projection cache capped at 65,536 entries. Lab/chroma matching uses JavaScript as
+before. Incoming diffusion errors are not projected back into gamut or rounded
+into bytes.
+
+![Original, 1.4.0 and gamut-aware error diffusion without text protection](docs/images/gamut-error-diffusion.png)
+
+The synthetic sharp-edge comparison can be regenerated with
+`node scripts/render-gamut-comparison.mjs /path/to/epdoptimize-1.4.0/dist/index.mjs`
+after `npm run build` (requires ImageMagick). Both outputs use the same source,
+calibrated palette, Sierra-3, serpentine scanning, Lab matching and disabled text
+protection. See [validation and limitations](docs/gamut-error-diffusion.md).
+
 ### Experimental: Automatic text and graphics protection
 
 For flattened layouts containing both images and text, enable
