@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 import * as esm from '../dist/index.mjs';
 const cjs = createRequire(import.meta.url)('../dist/index.cjs');
 globalThis.ImageData = class ImageData {
@@ -15,6 +16,9 @@ function canvas(data, width, height) {
     };
   } };
 }
+// Independent bench export: preserve the RGB-to-recipe association for every state.
+const measuredPalette = JSON.parse(readFileSync(new URL(
+  '../docs/calibration/spectra35-2026-11-25/palette.json', import.meta.url), 'utf8'));
 const rgb = hex => hex.slice(1).match(/../g).map(v => parseInt(v, 16));
 
 for (const [format, lib] of [['ESM', esm], ['CJS', cjs]]) {
@@ -25,9 +29,8 @@ for (const [format, lib] of [['ESM', esm], ['CJS', cjs]]) {
     assert.deepEqual(p.map(x => x.deviceColor), Array.from({length: 35}, (_, i) => '#' + (0x010000 + i).toString(16).toUpperCase().padStart(6, '0')));
     assert.deepEqual(lib.getDefaultPalettes('spectra35-experimental'), p.map(x => x.color));
     assert.deepEqual(lib.getDeviceColors('spectra35-experimental'), p.map(x => x.deviceColor));
-    assert.equal(p[0].color, '#2D263E');
-    assert.equal(p[1].color, '#C4BEBD');
-    assert.equal(p[4].color, '#2F72C7'); // recipe 4 is blue, native code 4 is not.
+    assert.deepEqual(p, measuredPalette, 'all matching RGB values must retain their measured recipe association');
+    assert.equal(p[4].color, '#00419F'); // recipe 4 is blue, native code 4 is not.
     const input = Uint8ClampedArray.from(p.flatMap(x => [...rgb(x.color), 255]));
     for (const ditheringType of ['quantizationOnly', 'errorDiffusion']) {
       const source = canvas(input, 35, 1), preview = canvas([], 35, 1), tokens = canvas([], 35, 1);

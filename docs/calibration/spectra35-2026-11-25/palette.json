@@ -1,0 +1,177 @@
+[
+  {
+    "name": "black",
+    "color": "#000103",
+    "deviceColor": "#010000"
+  },
+  {
+    "name": "white",
+    "color": "#BDC8C8",
+    "deviceColor": "#010001"
+  },
+  {
+    "name": "C03",
+    "color": "#CECC00",
+    "deviceColor": "#010002"
+  },
+  {
+    "name": "C04",
+    "color": "#881A11",
+    "deviceColor": "#010003"
+  },
+  {
+    "name": "C05",
+    "color": "#00419F",
+    "deviceColor": "#010004"
+  },
+  {
+    "name": "C06",
+    "color": "#29653E",
+    "deviceColor": "#010005"
+  },
+  {
+    "name": "C07",
+    "color": "#C1C8B7",
+    "deviceColor": "#010006"
+  },
+  {
+    "name": "C08",
+    "color": "#AAB9BF",
+    "deviceColor": "#010007"
+  },
+  {
+    "name": "C09",
+    "color": "#2B7AA0",
+    "deviceColor": "#010008"
+  },
+  {
+    "name": "C10",
+    "color": "#B19D9C",
+    "deviceColor": "#010009"
+  },
+  {
+    "name": "C11",
+    "color": "#CAC088",
+    "deviceColor": "#01000A"
+  },
+  {
+    "name": "C12",
+    "color": "#2E673A",
+    "deviceColor": "#01000B"
+  },
+  {
+    "name": "C13",
+    "color": "#9B838A",
+    "deviceColor": "#01000C"
+  },
+  {
+    "name": "C14",
+    "color": "#698000",
+    "deviceColor": "#01000D"
+  },
+  {
+    "name": "C15",
+    "color": "#002D7B",
+    "deviceColor": "#01000E"
+  },
+  {
+    "name": "C16",
+    "color": "#A0AC55",
+    "deviceColor": "#01000F"
+  },
+  {
+    "name": "C17",
+    "color": "#631700",
+    "deviceColor": "#010010"
+  },
+  {
+    "name": "C18",
+    "color": "#000B4A",
+    "deviceColor": "#010011"
+  },
+  {
+    "name": "C19",
+    "color": "#001821",
+    "deviceColor": "#010012"
+  },
+  {
+    "name": "C20",
+    "color": "#BD873E",
+    "deviceColor": "#010013"
+  },
+  {
+    "name": "C21",
+    "color": "#00493A",
+    "deviceColor": "#010014"
+  },
+  {
+    "name": "C22",
+    "color": "#492943",
+    "deviceColor": "#010015"
+  },
+  {
+    "name": "C23",
+    "color": "#2E182E",
+    "deviceColor": "#010016"
+  },
+  {
+    "name": "C24",
+    "color": "#7EA3BC",
+    "deviceColor": "#010017"
+  },
+  {
+    "name": "C25",
+    "color": "#587D4A",
+    "deviceColor": "#010018"
+  },
+  {
+    "name": "C26",
+    "color": "#573047",
+    "deviceColor": "#010019"
+  },
+  {
+    "name": "C27",
+    "color": "#43243C",
+    "deviceColor": "#01001A"
+  },
+  {
+    "name": "C28",
+    "color": "#9C462C",
+    "deviceColor": "#01001B"
+  },
+  {
+    "name": "C29",
+    "color": "#7F944D",
+    "deviceColor": "#01001C"
+  },
+  {
+    "name": "C30",
+    "color": "#AC6739",
+    "deviceColor": "#01001D"
+  },
+  {
+    "name": "C31",
+    "color": "#B6B700",
+    "deviceColor": "#01001E"
+  },
+  {
+    "name": "C32",
+    "color": "#006149",
+    "deviceColor": "#01001F"
+  },
+  {
+    "name": "C33",
+    "color": "#9CB1BD",
+    "deviceColor": "#010020"
+  },
+  {
+    "name": "C34",
+    "color": "#8B676E",
+    "deviceColor": "#010021"
+  },
+  {
+    "name": "C35",
+    "color": "#1A69A7",
+    "deviceColor": "#010022"
+  }
+]

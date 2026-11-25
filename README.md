@@ -394,7 +394,10 @@ You can pass one combined palette to both `ditherImage` and `replaceColors`.
 35 camera-derived `color` values paired with exact recipe tokens in `deviceColor`.
 The default palette and Spectra6 exports are unchanged. This is an explicit API
 opt-in. In the demo, select **Spectra35 · 35 colors · EXPERIMENTAL** to
-generate an approximate appearance preview and a lossless recipe-token PNG.
+generate an approximate preview calibrated relative to `aitjcizeSpectra6Palette`
+and a lossless recipe-token PNG. The 2026-11-25 correction updates matching RGB
+values while keeping all 35 recipe IDs unchanged; intermediate-color calibration
+remains experimental.
 The demo shows an experimental warning and disables normal device upload for
 this palette, including copied/imported palettes containing its recipe tokens.
 For the bench planner, choose OpenPaper L at 1600 × 1200 in landscape.

@@ -87,7 +87,8 @@ export const spectra6OriginalPreviewPalette = getDefaultPalette(
 );
 export const aitjcizeSpectra6Palette = getDefaultPalette("aitjcize-spectra6");
 /**
- * EXPERIMENTAL: camera-derived OpenPaper L 35-state recipe palette.
+ * EXPERIMENTAL: OpenPaper L 35-state palette, calibrated relative to aitjcize Spectra6.
+ * color values are matching RGB estimates, not absolute colorimetric measurements.
  * deviceColor values #010000..#010022 are recipe tokens, NOT Spectra6 codes.
  * Requires a matching multi-pass LUT driver; never upload tokens to stock firmware.
  * See docs/spectra35-experimental.md for calibration and hardware limitations.
