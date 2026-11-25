@@ -12,6 +12,12 @@ not all pairs are proven independently distinguishable under every condition.
 
 ## Use the palette
 
+In the [demo](https://paperlesspaper.github.io/epdoptimize/), select
+**Spectra35 · 35 colors · EXPERIMENTAL**. The Dithered preview uses approximate
+appearance RGB; the Recipe tokens preview exports `spectra35-recipe-tokens.png`.
+Normal device upload is disabled. Choose OpenPaper L and landscape for the
+1600 × 1200 bench planner, then follow the custom-driver workflow below.
+
 ```js
 import {
   applyImageAdjustments,

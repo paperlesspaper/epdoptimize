@@ -13,6 +13,7 @@ import {
   spectra6OriginalPreviewPalette,
   spectra6legacyPalette,
   spectra6Palette,
+  spectra35ExperimentalPalette,
   trmnlSeeed16GrayscalePalette,
 } from "../../src";
 import type { ImageFitMode, ScreenOrientation } from "./types";
@@ -169,6 +170,11 @@ export const PALETTE_OPTIONS = {
     label: "Spectra 6 (legacy)",
     exportName: "spectra6Palette",
     palette: spectra6Palette,
+  },
+  "spectra35-experimental": {
+    label: "Spectra35 · 35 colors · EXPERIMENTAL",
+    exportName: "spectra35ExperimentalPalette",
+    palette: spectra35ExperimentalPalette,
   },
   "spectra6-boeber": {
     label: "Spectra 6 Böber",

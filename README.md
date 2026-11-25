@@ -393,7 +393,11 @@ You can pass one combined palette to both `ditherImage` and `replaceColors`.
 `spectra35ExperimentalPalette` and the named key `spectra35-experimental` provide
 35 camera-derived `color` values paired with exact recipe tokens in `deviceColor`.
 The default palette and Spectra6 exports are unchanged. This is an explicit API
-opt-in; it is not added to the demo's standard device-upload presets.
+opt-in. In the demo, select **Spectra35 · 35 colors · EXPERIMENTAL** to
+generate an approximate appearance preview and a lossless recipe-token PNG.
+The demo shows an experimental warning and disables normal device upload for
+this palette, including copied/imported palettes containing its recipe tokens.
+For the bench planner, choose OpenPaper L at 1600 × 1200 in landscape.
 
 See [the usage guide and token mapping](docs/spectra35-experimental.md) and
 [Panels → Spectra35](https://docs.paperlesspaper.de/panels/spectra35) for the
