@@ -1113,6 +1113,18 @@
         padding: 8px;
       }
       #configImportStatus { font-size: 12px; overflow-wrap: anywhere; }
+      .experimental-warning {
+        margin-top: 12px;
+        padding: 16px;
+        border: 2px solid #b96a00;
+        border-radius: 10px;
+        background: #fff3cd;
+        color: #4d3200;
+        line-height: 1.5;
+      }
+      .experimental-warning strong { display: block; font-size: 16px; }
+      .experimental-warning p { margin: 8px 0; }
+      .experimental-warning a { color: #663c00; text-decoration: underline; }
     </style>
   </head>
   <body>
@@ -1194,6 +1206,7 @@
                     aitjcize Spectra 6
                   </option>
                   <option value="spectra6">Spectra 6</option>
+                  <option value="spectra35-experimental">Spectra35 · 35 colors · EXPERIMENTAL</option>
                   <option value="spectra6-boeber">Spectra 6 Böber</option>
                   <option value="spectra6-original">
                     Spectra 6 Original (no replace)
@@ -1205,6 +1218,13 @@
                   <option value="acep">Gallery</option>
                   <option value="gameboy">Game Boy</option>
                 </select>
+                <aside id="spectra35Warning" class="experimental-warning" role="note" hidden>
+                  <strong>EXPERIMENTAL TESTS — Spectra35</strong>
+                  <p>35 camera-derived recipe colors for the tested OpenPaper L. This is not a standard panel mode. Color accuracy, stability and panel lifetime are not validated; custom waveforms can damage the panel.</p>
+                  <p>The dithered image is an approximate appearance preview. The almost-black token PNG requires custom firmware and the multi-pass LUT planner. <b>Do not upload it to ordinary Spectra6 firmware.</b></p>
+                  <p>For the tested planner, choose OpenPaper L at 1600 × 1200 in landscape before processing. Keep the token PNG lossless and unmodified.</p>
+                  <a href="https://docs.paperlesspaper.de/panels/spectra35" target="_blank" rel="noopener noreferrer">Read the experimental guide and download the recipe kit →</a>
+                </aside>
                 <div
                   id="palettePreview"
                   class="palette-strip"
@@ -1831,6 +1851,7 @@
                 />
               </div>
               <div class="control full action-row">
+                <p id="spectra35UploadNotice" role="note" hidden>Experimental Spectra35: normal device upload is unavailable. Download the recipe-token PNG and use the custom LUT planner.</p>
                 <button id="testOnDeviceButton" class="button" type="button">
                   Test on device
                 </button>
@@ -2053,7 +2074,7 @@
             <div class="preview-head">
               <div class="preview-title">
                 <h2>Dithered</h2>
-                <p class="preview-subtitle">
+                <p id="ditheredOutputDescription" class="preview-subtitle">
                   Simulates how it will look on the display
                 </p>
               </div>
@@ -2084,8 +2105,8 @@
           <article class="preview">
             <div class="preview-head">
               <div class="preview-title">
-                <h2>Device</h2>
-                <p class="preview-subtitle">
+                <h2 id="deviceOutputTitle">Device</h2>
+                <p id="deviceOutputDescription" class="preview-subtitle">
                   Actual image sent to the display (using internal colors)
                 </p>
               </div>

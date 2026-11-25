@@ -21,6 +21,14 @@ import {
 import type { ImageFitMode, ScreenOrientation } from "./types";
 
 let customResolution = parseCustomResolution(800, 480);
+let uploadBlockReason = "";
+let uploading = false;
+
+export function setDeviceUploadBlock(reason: string) {
+  uploadBlockReason = reason;
+  testOnDeviceButton.disabled = uploading || Boolean(reason);
+  testOnDeviceButton.title = reason;
+}
 
 export function updateCustomResolution() {
   try {
@@ -138,6 +146,10 @@ export function setDeviceTestStatus(
 }
 
 export async function testOnDevice() {
+  if (uploadBlockReason) {
+    setDeviceTestStatus(uploadBlockReason, "error");
+    return;
+  }
   const { paperId, apiKey } = getDeviceTestConfig();
 
   if (!paperId) {
@@ -155,12 +167,15 @@ export async function testOnDevice() {
     return;
   }
 
+  uploading = true;
   testOnDeviceButton.disabled = true;
   setDeviceTestStatus("Uploading...");
 
   try {
     const pictureBlob = await canvasToLandscapePngBlob(outputCanvas);
     const pictureDeviceBlob = await canvasToLandscapePngBlob(deviceColorsCanvas);
+    // Palette selection or rendering may have changed while encoding the PNGs.
+    if (uploadBlockReason) throw new Error(uploadBlockReason);
     const formData = new FormData();
     formData.append("picture", pictureBlob, "epdoptimize-dithered.png");
     formData.append(
@@ -203,7 +218,8 @@ export async function testOnDevice() {
     const message = error instanceof Error ? error.message : "Upload failed.";
     setDeviceTestStatus(message, "error");
   } finally {
-    testOnDeviceButton.disabled = false;
+    uploading = false;
+    testOnDeviceButton.disabled = Boolean(uploadBlockReason);
   }
 }
 

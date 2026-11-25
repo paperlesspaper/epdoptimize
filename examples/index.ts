@@ -1,4 +1,5 @@
 import { parseDemoConfig, mergeControlChanges } from "./demo/config-import";
+import { usesSpectra35Tokens, SPECTRA35_UPLOAD_NOTICE } from "./demo/experimental-palette";
 import { buildCoverageSolver } from "../src/utils/coverage";
 import { hexToRgb } from "../src/dither/functions/color-helpers";
 import {
@@ -36,6 +37,7 @@ import {
   loadDeviceTestConfig,
   saveDeviceTestConfig,
   setDeviceTestStatus,
+  setDeviceUploadBlock,
   testOnDevice,
 } from "./demo/device-test";
 import {
@@ -1319,6 +1321,7 @@ function getSelectedPaletteOption() {
 
 function updatePalettePreviews() {
   const { palette } = getSelectedPaletteOption();
+  updateExperimentalPaletteState();
 
   renderColorPalette(
     palettePreview,
@@ -1328,6 +1331,29 @@ function updatePalettePreviews() {
     deviceColorsPreview,
     palette.map((entry) => entry.deviceColor),
   );
+}
+
+function updateExperimentalPaletteState() {
+  const selected = paletteSelect.value === "spectra35-experimental" ||
+    usesSpectra35Tokens(getSelectedPaletteOption().palette);
+  const rendered = deviceColorsCanvas.dataset.recipeTokens === "true";
+  document.getElementById("spectra35Warning")!.hidden = !(selected || rendered);
+  document.getElementById("spectra35UploadNotice")!.hidden = !(selected || rendered);
+  setDeviceUploadBlock(selected || rendered ? SPECTRA35_UPLOAD_NOTICE : "");
+  document.getElementById("deviceOutputTitle")!.textContent = rendered ? "Recipe tokens · Experimental" : "Device";
+  document.getElementById("deviceOutputDescription")!.textContent = rendered
+    ? "Almost-black IDs, not visible colors. Lossless PNG for the custom LUT planner only; never upload to standard firmware."
+    : "Actual image sent to the display (using internal colors)";
+  document.getElementById("ditheredOutputDescription")!.textContent = rendered
+    ? "Approximate 35-state appearance preview; actual panel colors and fine dither patterns can differ."
+    : "Simulates how it will look on the display";
+  downloadDeviceColorsLink.download = rendered ? "spectra35-recipe-tokens.png" : "dithered-device-colors.png";
+  downloadDeviceColorsLink.setAttribute("aria-label", rendered ? "Download experimental recipe-token PNG" : "Download device-color PNG");
+}
+
+function recordRenderedPalette(palette: PaletteColorEntry[]) {
+  deviceColorsCanvas.dataset.recipeTokens = String(usesSpectra35Tokens(palette));
+  updateExperimentalPaletteState();
 }
 
 function getToneMappingFromUI() {
@@ -2291,6 +2317,7 @@ async function renderProcessedCanvases(
     await applyImageAdjustments(inputCanvas, adjustedCanvas, adjustmentOptions);
     await ditherCanvas(adjustedCanvas, outputCanvas, options);
     replaceColors(outputCanvas, deviceColorsCanvas, palette);
+    recordRenderedPalette(palette);
     return;
   }
 
@@ -2365,6 +2392,7 @@ async function renderProcessedCanvases(
         putImageDataOnCanvas(adjustedCanvas, event.data.adjustedImageData);
         putImageDataOnCanvas(outputCanvas, event.data.ditheredImageData);
         putImageDataOnCanvas(deviceColorsCanvas, event.data.deviceImageData);
+        recordRenderedPalette(palette);
       }
       resolve();
     };
