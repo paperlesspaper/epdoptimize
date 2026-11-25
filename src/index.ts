@@ -13,7 +13,8 @@ const paletteRegistry = palettes as PaletteRegistry;
  * Retrieve a named default palette as combined color entries.
  *
  * `color` is the calibrated/display color used for dithering.
- * `deviceColor` is the native device color that should replace it before export.
+ * `deviceColor` is the output code that replaces it before export.
+ * Experimental palettes may use adapter tokens rather than native panel colors.
  */
 function getDefaultPalette(
   name: string,
@@ -85,6 +86,15 @@ export const spectra6OriginalPreviewPalette = getDefaultPalette(
   "spectra6-original-preview"
 );
 export const aitjcizeSpectra6Palette = getDefaultPalette("aitjcize-spectra6");
+/**
+ * EXPERIMENTAL: camera-derived OpenPaper L 35-state recipe palette.
+ * deviceColor values #010000..#010022 are recipe tokens, NOT Spectra6 codes.
+ * Requires a matching multi-pass LUT driver; never upload tokens to stock firmware.
+ * See docs/spectra35-experimental.md for calibration and hardware limitations.
+ */
+export const spectra35ExperimentalPalette = getDefaultPalette(
+  "spectra35-experimental"
+);
 export const acepPalette = getDefaultPalette("acep");
 
 export { replaceColors } from "./replaceColors/replaceColors";

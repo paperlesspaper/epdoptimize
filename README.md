@@ -379,9 +379,25 @@ The fields mean:
 
 - `name`: Stable role used to align palette colors with device colors.
 - `color`: Calibrated display appearance used for dithering and color matching.
-- `deviceColor`: Native output color sent to the display.
+- `deviceColor`: Output code used by the device adapter. Most palettes use native display colors; experimental Spectra35 uses recipe tokens instead.
 
 You can pass one combined palette to both `ditherImage` and `replaceColors`.
+
+## Spectra35 — experimental tests
+
+> **EXPERIMENTAL · CUSTOM LUT DRIVER REQUIRED.** Spectra35 is a 35-state OpenPaper L
+> lab palette, not a new native E Ink mode. Its output tokens cannot be uploaded
+> to a normal Spectra6 frame. Custom waveforms may permanently damage a panel.
+> More palette entries do not guarantee better photos or neutral grays.
+
+`spectra35ExperimentalPalette` and the named key `spectra35-experimental` provide
+35 camera-derived `color` values paired with exact recipe tokens in `deviceColor`.
+The default palette and Spectra6 exports are unchanged. This is an explicit API
+opt-in; it is not added to the demo's standard device-upload presets.
+
+See [the usage guide and token mapping](docs/spectra35-experimental.md) and
+[Panels → Spectra35](https://docs.paperlesspaper.de/panels/spectra35) for the
+experimental five-pass workflow, recipe downloads, actual panel captures and limits.
 
 ## Built-In Palettes
 
