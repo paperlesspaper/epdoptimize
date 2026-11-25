@@ -14,7 +14,7 @@ not all pairs are proven independently distinguishable under every condition.
 
 In the [demo](https://paperlesspaper.github.io/epdoptimize/), select
 **Spectra35 · 35 colors · EXPERIMENTAL**. The Dithered preview uses approximate
-appearance RGB; the Recipe tokens preview exports `spectra35-recipe-tokens.png`.
+matching RGB relative to `aitjcizeSpectra6Palette`; the Recipe tokens preview exports `spectra35-recipe-tokens.png`.
 Normal device upload is disabled. Choose OpenPaper L and landscape for the
 1600 × 1200 bench planner, then follow the custom-driver workflow below.
 
@@ -25,27 +25,26 @@ import {
   replaceColors,
   spectra35ExperimentalPalette,
   suggestCanvasDitherOptions,
+  suggestCanvasImageAdjustmentOptions,
 } from 'epdoptimize';
 
 // Fit/rotate the source to 1600 × 1200 BEFORE processing.
 // input, adjusted, preview and tokens are separate canvases.
 const palette = spectra35ExperimentalPalette;
-const automatic = suggestCanvasDitherOptions(input, palette, { intent: 'natural' });
+const image = suggestCanvasImageAdjustmentOptions(input, palette, { intent: 'natural' });
+const dither = suggestCanvasDitherOptions(input, palette, { intent: 'natural' });
 const options = {
-  ...automatic.ditherOptions,
+  ...image.adjustmentOptions,
+  ...dither.ditherOptions,
   palette,
   processingEngine: 'js',
   calibrate: true,
-  toneMapping: { mode: 'off' },
-  clarity: { amount: 0 },
-  dynamicRangeCompression: { mode: 'display', strength: 1 },
-  levelCompression: { mode: 'off' },
-  paperNormalization: { mode: 'off' },
+  previewMode: 'final',
 };
 await applyImageAdjustments(input, adjusted, options);
 await ditherCanvas(adjusted, preview, options);
 replaceColors(preview, tokens, palette);
-// preview contains appearance RGB; tokens contains IDs for the LUT adapter.
+// preview contains model RGB; tokens contains IDs for the LUT adapter.
 // Save tokens losslessly as PNG, without resizing or color conversion.
 ```
 
@@ -56,22 +55,39 @@ replacement; do not pair this palette with a Spectra6 replacement table.
 `quantizationOnly` can be selected instead of automatic dithering for solid
 fields. It does not synthesize additional intermediate states.
 
-## Appearance versus output
+## Matching RGB versus output
 
-| Recipe index | Appearance `color` | Output `deviceColor` | Meaning |
+| Recipe index | Matching `color` | Output `deviceColor` | Meaning |
 | --- | --- | --- | --- |
-| 0 | `#2D263E` | `#010000` | Dark reference state, with a visible violet bias |
-| 1 | `#C4BEBD` | `#010001` | Light reference state |
-| 3 | `#C44F45` | `#010003` | Red recipe |
-| 4 | `#2F72C7` | `#010004` | Blue recipe; **not** native image code 4 |
-| 34 | `#3893D5` | `#010022` | Last recipe in this palette revision |
+| 0 | `#000103` | `#010000` | Dark reference state |
+| 1 | `#BDC8C8` | `#010001` | Light reference state |
+| 3 | `#881A11` | `#010003` | Red recipe; aitjcize reference red is `#871300` |
+| 4 | `#00419F` | `#010004` | Blue recipe; **not** native image code 4 |
+| 34 | `#1A69A7` | `#010022` | Last recipe in this palette revision |
 
-All 35 appearance values are copied from the November 2026 `natural35` bench
-palette, in its original order. Names `C03`–`C35` are stable recipe labels, not
+The 2026-11-25 correction changes all 35 **matching RGB values**, while retaining
+names, order and recipe tokens. Names `C03`–`C35` are stable recipe labels, not
 claims of standardized hues. The role names `black` and `white` identify
-reference endpoints; the measured colors are neither ideal black nor ideal white.
-The source `palette.json` SHA-256 is
-`c829d104627fcf7e7666ef24b4733809fdeb0947a95900e6df537b3850bf26c0`.
+reference endpoints. Their RGB values now describe the aitjcize-relative model,
+not literal camera pixel values or guaranteed physical black/white appearance.
+
+The previous camera-derived model assigned too-bright RGB values to several
+physical dark states. For example, the red recipe was described as `#C44F45`
+and is now `#881A11`. An over-bright model can cause the ditherer to select too
+much dark pigment. Correcting `color` changes recipe selection and mixing
+proportions; it does not change drive voltages or the physical recipe itself.
+No scene-specific brightness curve is added by this correction. Standard
+Spectra6 palettes, including `aitjcizeSpectra6Palette`, are unchanged.
+
+The [exact bench palette export](calibration/spectra35-2026-11-25/palette.json)
+has SHA-256
+`a672dc35b28eaf399825285241860b4d122d076fb2cb6c7d69eb29c69b453d44`.
+Use the new palette consistently for adjustment suggestions, dithering and
+replacement; cached previews generated with the previous RGB values must be
+regenerated before replacement with the new palette. Existing token images
+still select the same recipes.
+
+![Numerical RGB alignment; not a physical display photograph](calibration/spectra35-2026-11-25/native-model-comparison.png)
 
 The token RGB integer is `0x010000 + recipeIndex`, for indices 0–34 inclusive.
 A token PNG therefore looks almost black. That is expected: it is an index
@@ -99,21 +115,62 @@ The downloadable planner does not communicate with hardware.
 
 ## Calibration and limitations
 
-The palette comes from camera observations of uniform fields, two fresh chart
-builds and both controller halves, with an in-frame reference card and camera
-sharpness disabled for the palette measurements. These RGB estimates are not
-spectrophotometer measurements or an ICC profile. Later live comparisons use
-geometry-corrected photographs without adding a color-correction matrix.
+> **EXPERIMENTAL RELATIVE CALIBRATION.** This aligns the matching model with
+> `aitjcizeSpectra6Palette`; it is not absolute colorimetry, an ICC profile or a
+> guarantee that fine dither mixtures reproduce the modeled RGB values.
 
-Fine 1-, 2- and 4-pixel mixtures can differ from the average of their solid
-swatches. Position, illumination, pigment history, later passes and drift also
-matter. Skin tones, dark neutral grays and pale pink remain difficult. The tests
-do not establish 35 universally stable colors, 16 neutral grays, panel lifetime,
-or calibrated absolute Source/VCOM voltages.
+Two freshly prepared, rearranged charts measured the 35 recipes on both
+controller halves. Native preparation and final four-LUT-pass states were
+captured with 30 camera samples each; the last ten were used. Printed neutral
+swatches tracked temporal camera drift. Native black and white fields fitted
+quadratic spatial corrections for the strong position-dependent glare and
+illumination. Those baseline corrections were retained for the final states.
 
-The later lake/flags/balcony/poster trials additionally used a linear-light
-8-bit adapter, gamut compression and a source-color-dependent v3 correction.
-Those scene-tuned transforms are **not baked into this palette** or the generic
-example above. Selecting the palette alone does not reproduce those previews.
-The five-pass bench photo builds took roughly 4–5.5 minutes, including staging,
-cooldowns and an intermediate capture. This is not a 120-second photo mode.
+The six native color anchors map normalized linear camera RGB into linearized
+aitjcize RGB using tetrahedral interpolation, followed by sRGB encoding.
+Outside-hull states use the nearest simplex's affine extension with explicit
+clipping. The [measurement export](calibration/spectra35-2026-11-25/measurements.json)
+records every old/new value, repeated measurement, extrapolation and clipping
+flag. In particular:
+
+- The independently rearranged chart's **aggregate six-native-anchor** mean
+  ΔE76 is **1.42**. This is a consistency check, not the accuracy of all 35 colors.
+- **29 of 35** mean recipe measurements are outside the six-anchor convex hull
+  (some only slightly), so their mapping uses extrapolation.
+- Maximum per-state repeat deviation reaches **23.94 ΔE76**. The intermediate
+  colors are substantially less certain than the aggregate anchor check.
+- Fine 1-, 2- and 4-pixel mixtures can differ from the average of solid swatches.
+  Position, illumination, pigment history, later passes and drift also matter.
+
+The tests do not establish 35 universally stable colors, 16 neutral grays,
+reliable skin-tone reproduction, panel lifetime or absolute Source/VCOM voltages.
+
+## Panel comparison with automatic processing
+
+The brush/paint sample was fitted to 1600 × 1200 with English labels. Its left
+half uses **`aitjcizeSpectra6Palette`**, and its right half uses the corrected
+Spectra35 palette. Both received the same ordinary automatic natural adjustment
+and dithering settings shown above, without an extra tone curve, gamut adapter
+or bit-depth reduction. Earlier comparisons used the legacy `spectra6Palette`
+on the left and must not be treated as the same reference.
+
+![Actual panel: left aitjcize Spectra6, right corrected Spectra35](calibration/spectra35-2026-11-25/panel-comparison.jpg)
+
+This photograph has perspective correction only, no added color correction.
+The right side shows finer brush/paint detail than the earlier uncorrected
+rendering, but a color/brightness boundary remains visible in the purple bowl.
+This is a qualitative observation: the halves contain different scene content
+and the lighting varies strongly across the panel.
+
+The [panel verification](calibration/spectra35-2026-11-25/panel-verification.json)
+records all five completed passes, unchanged camera controls and mean absolute
+left-half RGB drift of **0.80/255** after printed-card drift alignment. Image RAM,
+LUT hashes, both controller identities and natural BUSY completion were checked
+by the bench runner. A first attempt stopped on a rejected final image upload
+before refresh; the successful comparison was rebuilt from a fresh native
+preparation with slower USB packet pacing.
+
+The successful build took **402.3 seconds**, including staging, cooldowns and an
+intermediate camera capture. This remains an experimental multi-pass photo mode,
+not a 120-second build. Source0 preservation is only an observed result for this
+run, not proof of electrical high impedance or long-term stability.

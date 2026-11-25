@@ -1,0 +1,31 @@
+{
+  "label": "relative35-photo-r2",
+  "build_seconds": 402.3025262680021,
+  "completed": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "layout": "LEFT aitjcizeSpectra6Palette / RIGHT measured relative Spectra35; continuous image",
+  "palette_values_changed": 35,
+  "device_tokens_changed": 0,
+  "lut_recipes_changed": 0,
+  "processing": "Ordinary automatic natural image/dither suggestions for each palette; no custom tone curve, no extra bit reduction.",
+  "controls_unchanged": true,
+  "card_mean_abs_rgb": 0.08518518518518488,
+  "native_left_after_neutral_card_alignment_mean_abs_rgb": 0.7994870020599,
+  "native_left_after_alignment_mean_rgb_change": [
+    -0.09329212948778966,
+    0.23686383102293093,
+    0.19845444277166416
+  ],
+  "camera_preview_color_corrected": false,
+  "limitations": [
+    "Camera preview has perspective correction only, not color correction.",
+    "Strong spatial illumination/glare gradient prevents ranking panel halves by raw brightness.",
+    "The two halves show different scene content; this is a visual continuity test, not same-coordinate color accuracy validation.",
+    "Fine dithering differs from solid calibration patches; source0 hold is experimental."
+  ]
+}
