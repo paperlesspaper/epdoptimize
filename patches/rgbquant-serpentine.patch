@@ -1,0 +1,20 @@
+--- a/src/rgbquant.js
++++ b/src/rgbquant.js
+@@ -273,7 +273,7 @@
+ 
+ 			var lni = y * width;
+ 
+-			for (var x = (dir == 1 ? 0 : width - 1), xend = (dir == 1 ? width : 0); x !== xend; x += dir) {
++			for (var x = (dir == 1 ? 0 : width - 1), xend = (dir == 1 ? width : -1); x !== xend; x += dir) {
+ 				// Image pixel (add accumulated float error before clamping)
+ 				var idx = lni + x,
+ 					i32 = buf32[idx],
+@@ -308,7 +308,7 @@
+ 					eg = g1r - g2,
+ 					eb = b1r - b2;
+ 
+-				for (var i = (dir == 1 ? 0 : ds.length - 1), end = (dir == 1 ? ds.length : 0); i !== end; i += dir) {
++				for (var i = (dir == 1 ? 0 : ds.length - 1), end = (dir == 1 ? ds.length : -1); i !== end; i += dir) {
+ 					var x1 = ds[i][1] * dir,
+ 						y1 = ds[i][2];
+ 

@@ -975,6 +975,10 @@ const applyFastDynamicRangeCompression = (
     const chromaProtection = getDynamicRangeChromaProtection(r, g, b);
     const effectiveStrength = strength * (1 - chromaProtection);
     const nextY = y + (targetY - y) * effectiveStrength;
+    if (y === 0) {
+      data[i] = data[i + 1] = data[i + 2] = clampByte(nextY);
+      continue;
+    }
     let ratio = y > 0 ? nextY / y : 0;
     const maxChannel = Math.max(r, g, b);
     if (maxChannel > 0) ratio = Math.min(ratio, 255 / maxChannel);
@@ -1093,6 +1097,10 @@ const applyLevelCompression = (
     const b = data[i + 2];
     const y = luma709(r, g, b);
     const yNew = blackL + (y * dL) / 255;
+    if (y === 0) {
+      data[i] = data[i + 1] = data[i + 2] = clampByte(yNew);
+      continue;
+    }
     let ratio = y > 0 ? yNew / y : 0;
     const maxChannel = Math.max(r, g, b);
     if (maxChannel > 0) ratio = Math.min(ratio, 255 / maxChannel);

@@ -30,7 +30,7 @@ const maps = {
 
     { offset: [-2, 2], factor: 1 / 48 },
     { offset: [-1, 2], factor: 3 / 48 },
-    { offset: [0, 2], factor: 4 / 48 },
+    { offset: [0, 2], factor: 5 / 48 },
     { offset: [1, 2], factor: 3 / 48 },
     { offset: [2, 2], factor: 1 / 48 },
   ],
